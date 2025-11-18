@@ -1,0 +1,14 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="woodgrain" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="#C4A57B"/>
+      <path d="M0,20 Q25,15 50,20 T100,20" stroke="#8B6F47" stroke-width="2" fill="none" opacity="0.3"/>
+      <path d="M0,40 Q25,35 50,40 T100,40" stroke="#8B6F47" stroke-width="1.5" fill="none" opacity="0.2"/>
+      <path d="M0,60 Q25,58 50,60 T100,60" stroke="#A0826D" stroke-width="1" fill="none" opacity="0.25"/>
+      <path d="M0,80 Q25,77 50,80 T100,80" stroke="#8B6F47" stroke-width="2" fill="none" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#woodgrain)"/>
+  <rect width="400" height="400" fill="#8B6F47" opacity="0.05"/>
+  <text x="200" y="380" font-family="Arial, sans-serif" font-size="16" fill="#FFFFFF" text-anchor="middle" font-weight="bold" opacity="0.8">Coastal Oak</text>
+</svg>

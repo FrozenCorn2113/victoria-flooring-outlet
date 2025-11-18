@@ -1,0 +1,11 @@
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Disallow crawling of cart and checkout pages
+Disallow: /cart
+Disallow: /success
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://victoriaflooringoutlet.ca/sitemap.xml

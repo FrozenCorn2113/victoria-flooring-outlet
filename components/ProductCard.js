@@ -45,48 +45,55 @@ const ProductCard = props => {
   }, [cartCount]);
 
   return (
-    <Link href={`/products/${props.id}`}>
-      <a className="border rounded-md p-6 group">
-        {/* Product's image */}
-        <div className="relative w-full h-64 group-hover:transform group-hover:scale-125 group-hover:ease-in-out group-hover:duration-500">
-          <Image
-            src={props.image}
-            alt={props.name}
-            layout="fill"
-            objectFit="contain"
-          />
-        </div>
+    <div className="bg-white border border-vfo-border rounded-sm p-6 group hover:shadow-md transition-shadow">
+      <Link href={`/products/${props.id}`}>
+          {/* Product's image */}
+          <div className="relative w-full h-48 mb-4 rounded-sm overflow-hidden bg-vfo-sand">
+            <Image
+              src={props.image || '/flooring/placeholder.jpg'}
+              alt={props.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
 
-        {/* Name + Rating */}
-        <div className="mt-4 sm:mt-8">
-          <p className="font-semibold text-lg capitalize">{props.name}</p>
-          <Rating rate={props?.rating?.rate} count={props?.rating?.count} />
-        </div>
+          {/* Name + Rating */}
+          <div className="mb-4">
+            <p className="font-heading text-base text-vfo-charcoal mb-2 line-clamp-2">{props.name}</p>
+            {props.description && (
+              <p className="text-sm font-light text-vfo-grey line-clamp-2 mb-2">{props.description}</p>
+            )}
+            <Rating rate={props?.rating?.rate} count={props?.rating?.count} />
+          </div>
+      </Link>
 
-        {/* Price + CTA */}
-        <div className="mt-4 flex items-center justify-between space-x-2">
+      {/* Price + CTA */}
+      <div className="mt-4 pt-4 border-t border-vfo-border">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-gray-500">Price</p>
-            <p className="text-lg font-semibold">
-              {formatCurrency(props.price, props.currency)}
-            </p>
+            <p className="text-xs text-vfo-lightgrey mb-1">Price</p>
+            {props.pricePerSqFt ? (
+              <p className="text-lg font-medium text-vfo-charcoal">
+                ${props.pricePerSqFt.toFixed(2)}/sq ft
+              </p>
+            ) : (
+              <p className="text-lg font-medium text-vfo-charcoal">
+                {formatCurrency(props.price, props.currency)}
+              </p>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleOnAddToCart}
             disabled={adding || props.disabled}
-            className={`border rounded-lg py-1 px-4 hover:bg-rose-500 hover:border-rose-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              adding
-                ? 'disabled:bg-rose-500 disabled:border-rose-500 disabled:text-white'
-                : 'disabled:hover:bg-transparent disabled:hover:text-current disabled:hover:border-gray-200'
-            }`}
+            className="px-4 py-2 bg-vfo-charcoal hover:bg-vfo-slate text-white text-sm font-medium rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {adding ? 'Adding...' : 'Add to cart'}
+            {adding ? 'Adding...' : 'Add'}
           </button>
         </div>
-      </a>
-    </Link>
+      </div>
+    </div>
   );
 };
 

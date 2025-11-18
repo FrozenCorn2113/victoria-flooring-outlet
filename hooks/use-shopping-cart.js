@@ -13,15 +13,27 @@ const addItem = (state = {}, product = null, quantity = 0) => {
 
   let entry = state?.cartDetails?.[product.id];
 
+  // Calculate price based on whether product uses pricePerSqFt or price per box
+  const itemPrice = product.pricePerSqFt 
+    ? Math.round(product.pricePerSqFt * quantity * 100) // Convert to cents
+    : product.price * quantity;
+
   // Update item
   if (entry) {
     entry.quantity += quantity;
+    // Recalculate price for this item
+    if (product.pricePerSqFt) {
+      entry.itemTotalPrice = Math.round(product.pricePerSqFt * entry.quantity * 100);
+    } else {
+      entry.itemTotalPrice = product.price * entry.quantity;
+    }
   }
   // Add item
   else {
     entry = {
       ...product,
       quantity,
+      itemTotalPrice: itemPrice,
     };
   }
 
@@ -32,7 +44,7 @@ const addItem = (state = {}, product = null, quantity = 0) => {
       [product.id]: entry,
     },
     cartCount: Math.max(0, state.cartCount + quantity),
-    totalPrice: Math.max(state.totalPrice + product.price * quantity),
+    totalPrice: Math.max(0, state.totalPrice + itemPrice),
   };
 };
 
@@ -42,32 +54,41 @@ const removeItem = (state = {}, product = null, quantity = 0) => {
   let entry = state?.cartDetails?.[product.id];
 
   if (entry) {
+    // Calculate price to remove based on whether product uses pricePerSqFt or price per box
+    const priceToRemove = product.pricePerSqFt 
+      ? Math.round(product.pricePerSqFt * quantity * 100) // Convert to cents
+      : product.price * quantity;
+
     // Remove item
     if (quantity >= entry.quantity) {
       const { [product.id]: id, ...details } = state.cartDetails;
+      const itemPriceToRemove = entry.itemTotalPrice || priceToRemove;
       return {
         ...state,
         cartDetails: details,
         cartCount: Math.max(0, state.cartCount - entry.quantity),
-        totalPrice: Math.max(
-          0,
-          state.totalPrice - product.price * entry.quantity
-        ),
+        totalPrice: Math.max(0, state.totalPrice - itemPriceToRemove),
       };
     }
     // Update item
     else {
+      const newQuantity = entry.quantity - quantity;
+      const newItemTotalPrice = product.pricePerSqFt 
+        ? Math.round(product.pricePerSqFt * newQuantity * 100)
+        : product.price * newQuantity;
+
       return {
         ...state,
         cartDetails: {
           ...state.cartDetails,
           [product.id]: {
             ...entry,
-            quantity: entry.quantity - quantity,
+            quantity: newQuantity,
+            itemTotalPrice: newItemTotalPrice,
           },
         },
         cartCount: Math.max(0, state.cartCount - quantity),
-        totalPrice: Math.max(0, state.totalPrice - product.price * quantity),
+        totalPrice: Math.max(0, state.totalPrice - priceToRemove),
       };
     }
   } else {

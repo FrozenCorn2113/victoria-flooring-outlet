@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { fetcher, shootFireworks } from '@/lib/utils';
-import { CheckIcon } from '@heroicons/react/outline';
+import { CheckIcon } from '@heroicons/react/24/outline';
 
 const Success = () => {
   const {
@@ -25,7 +26,11 @@ const Success = () => {
   }, [data]);
 
   return (
-    <div className="container xl:max-w-screen-xl mx-auto py-12 px-6 text-center">
+    <>
+      <Head>
+        <title>Order Successful | Victoria Flooring Outlet</title>
+      </Head>
+      <div className="container xl:max-w-screen-xl mx-auto py-12 px-6 text-center">
       {error ? (
         <div className="p-2 rounded-md bg-rose-100 text-rose-500 max-w-md mx-auto">
           <p className="text-lg">Sorry, something went wrong!</p>
@@ -41,9 +46,13 @@ const Success = () => {
             <span>Thanks for your order!</span>
           </h2>
           <p className="text-lg mt-3">Check your inbox for the receipt.</p>
+          <p className="text-sm mt-2 text-gray-600">
+            Your order will be shipped directly from our warehouse partner, Harbinger.
+          </p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

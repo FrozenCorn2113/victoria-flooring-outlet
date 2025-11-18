@@ -1,0 +1,9 @@
+<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="800" fill="#F8F7F5"/>
+  <rect x="200" y="150" width="400" height="500" rx="20" fill="#FFFFFF" stroke="#E5E5E5" stroke-width="2"/>
+  <circle cx="400" cy="350" r="80" fill="#8B6F47" opacity="0.2"/>
+  <text x="400" y="370" font-family="Arial, sans-serif" font-size="24" fill="#4A4A4A" text-anchor="middle" font-weight="bold">T-Molding</text>
+  <text x="400" y="400" font-family="Arial, sans-serif" font-size="24" fill="#4A4A4A" text-anchor="middle" font-weight="bold">Transition Strip</text>
+  <text x="400" y="440" font-family="Arial, sans-serif" font-size="18" fill="#6B6B6B" text-anchor="middle">Coastal Oak Finish</text>
+  <text x="400" y="470" font-family="Arial, sans-serif" font-size="16" fill="#9B9B9B" text-anchor="middle">48 inches</text>
+</svg>

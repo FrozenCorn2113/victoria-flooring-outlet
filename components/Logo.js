@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-const Logo = () => (
-  <Link href="/">
-    <a className="flex items-center space-x-2">
-      <Image src="/leaf.svg" alt="Logo" width={32} height={32} />
-      <span className="hidden sm:inline-block font-extrabold text-3xl text-gray-700">
-        MyPlantShop
-      </span>
-    </a>
-  </Link>
-);
+const Logo = ({ variant = 'default' }) => {
+  return (
+    <Link href="/" className="flex items-center justify-center group">
+      <div className="relative w-72 h-20 md:w-96 md:h-24 lg:w-[32rem] lg:h-28 xl:w-[36rem] xl:h-32 flex-shrink-0">
+        <Image
+          src="/images/Victoriaflooringoutlet_logo.png"
+          alt="Victoria Flooring Outlet Logo"
+          fill
+          className="object-cover object-[center_45%]"
+        />
+      </div>
+    </Link>
+  );
+};
 
 export default Logo;
