@@ -1,4 +1,4 @@
-import 'tailwindcss/tailwind.css';
+import '../styles/globals.css';
 import Head from 'next/head';
 import { CartProvider } from '@/hooks/use-shopping-cart';
 import { Header, Footer } from '@/components/index';
