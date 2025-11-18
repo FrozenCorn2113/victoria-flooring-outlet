@@ -11,7 +11,7 @@ import { getUpsellProducts } from '@/lib/products';
 import { calculateShipping, formatCanadianPostalCode, validateCanadianPostalCode } from '@/lib/shipping';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
 
-import products from 'products';
+import products from '../../products';
 
 const Product = props => {
   const router = useRouter();
