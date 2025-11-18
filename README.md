@@ -1,20 +1,14 @@
-E-commerce store built with Next.js and Stripe checkout by [AlterClass.io](https://alterclass.io).
+# victoria-flooring-outlet
 
-- Learn to build this application step-by-step by following the tutorial on [AlterClass](https://alterclass.io/tutorials/create-an-ecommerce-website-with-nextjs-and-stripe).
-
-- Preview the app live [here](https://myplantshop.vercel.app/).
-
-- Deploy the same app using Vercel:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/AlterClassIO/ecommerce-nextjs-stripe-checkout&project-name=eCommerce+Store+by+AlterClass&repository-name=eCommerce+Store+by+AlterClass)
+E-commerce website for Victoria Flooring Outlet built with Next.js and Stripe checkout.
 
 ## Getting Started
 
 ### 1. Clone the repository and install dependencies
 
 ```
-git clone https://github.com/AlterClassIO/ecommerce-nextjs-stripe-checkout
-cd ecommerce-nextjs-stripe-checkout
+git clone https://github.com/FrozenCorn2113/victoria-flooring-outlet
+cd victoria-flooring-outlet
 npm install
 ```
 
@@ -46,4 +40,4 @@ npm run start
 
 ## License
 
-[MIT](https://github.com/AlterClassIO/ecommerce-nextjs-stripe-checkout/blob/master/LICENSE)
+[MIT](LICENSE)
