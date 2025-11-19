@@ -1,7 +1,9 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export const config = {
   api: {
@@ -14,6 +16,9 @@ export default async function handler(req, res) {
     let event;
 
     try {
+      if (!stripe) {
+        throw Error('Stripe is not configured.');
+      }
       // 1. Retrieve the event by verifying the signature using the raw body and secret
       const rawBody = await buffer(req);
       const signature = req.headers['stripe-signature'];

@@ -1,11 +1,16 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export default async function handler(req, res) {
   const id = req.query.id;
 
   try {
+    if (!stripe) {
+      throw Error('Stripe is not configured.');
+    }
     if (!id.startsWith('cs_')) {
       throw Error('Incorrect CheckoutSession ID.');
     }

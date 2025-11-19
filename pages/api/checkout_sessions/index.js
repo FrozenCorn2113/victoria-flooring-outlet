@@ -1,10 +1,18 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
+      if (!stripe) {
+        return res.status(503).json({
+          statusCode: 503,
+          message: 'Stripe is not configured. Please add STRIPE_SECRET_KEY.'
+        });
+      }
       const { items, shipping } = req.body || {};
       
       // Build line items
