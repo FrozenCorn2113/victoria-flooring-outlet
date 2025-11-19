@@ -67,11 +67,6 @@ const Footer = () => (
                 Installer Network
               </Link>
             </li>
-            <li>
-              <a href="mailto:contractors@victoriaflooringoutlet.ca" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                Contractor Pricing
-              </a>
-            </li>
           </ul>
         </div>
 
@@ -85,6 +80,11 @@ const Footer = () => (
               <a href="mailto:hello@victoriaflooringoutlet.ca" className="text-sm font-light text-white/80 hover:text-white transition-colors">
                 Contact
               </a>
+            </li>
+            <li>
+              <Link href="/terms" className="text-sm font-light text-white/80 hover:text-white transition-colors">
+                Terms & Conditions
+              </Link>
             </li>
           </ul>
         </div>
