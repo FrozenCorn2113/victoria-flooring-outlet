@@ -3,7 +3,7 @@ import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
 import { Logo } from '@/components/index';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
-import { TruckIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 const Header = () => {
   const { totalPrice, cartCount } = useShoppingCart();
@@ -12,12 +12,8 @@ const Header = () => {
     <header className="sticky top-0 bg-white z-50 border-b border-vfo-border/30">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         {/* Top trust bar - Desktop only */}
-        <div className="hidden md:flex items-center justify-between py-2.5 text-xs tracking-wide border-b border-vfo-border/20">
+        <div className="hidden md:flex items-center justify-center py-2.5 text-xs tracking-wide border-b border-vfo-border/20">
           <div className="flex items-center gap-6 text-vfo-grey">
-            <span className="flex items-center gap-2">
-              <TruckIcon className="w-3.5 h-3.5" />
-              <span className="font-light">Free Shipping over 500 sq ft</span>
-            </span>
             <span className="flex items-center gap-2">
               <ShieldCheckIcon className="w-3.5 h-3.5" />
               <span className="font-light">Lifetime Warranty</span>
@@ -29,9 +25,6 @@ const Header = () => {
               <span className="font-light">Proudly Canadian</span>
             </span>
           </div>
-          <div className="text-vfo-grey font-light">
-            Victoria, BC
-          </div>
         </div>
 
         {/* Main header */}
@@ -41,21 +34,16 @@ const Header = () => {
             <Logo />
           </div>
 
-          {/* Navigation - Center (Desktop only) */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-light tracking-wide flex-1 justify-center">
-            <Link href="/" className="text-vfo-charcoal hover:text-vfo-accent transition-colors">
-              Weekly Deal
-            </Link>
-            <Link href="/accessories" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
-              Accessories
-            </Link>
-            <Link href="/trusted-installers" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
-              Installers
-            </Link>
-          </nav>
-
-          {/* Cart - Right aligned */}
-          <div className="flex items-center justify-end gap-4 flex-1">
+          {/* Cart and Navigation - Right aligned */}
+          <div className="flex items-center justify-end gap-6 flex-1">
+            <nav className="hidden lg:flex items-center gap-6 text-sm font-light tracking-wide">
+              <Link href="/accessories" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
+                Accessories
+              </Link>
+              <Link href="/trusted-installers" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
+                Installers
+              </Link>
+            </nav>
             <Link
               href="/cart"
               className="flex items-center gap-3 text-vfo-charcoal hover:text-vfo-accent transition-colors group"

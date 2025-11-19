@@ -338,19 +338,19 @@ const Product = props => {
 
               {/* Need Help? Phone Contact */}
               <div className="pt-4 border-t border-vfo-border/50">
-                <p className="text-xs font-medium uppercase tracking-widest text-vfo-grey mb-3 text-center">
+                <p className="text-xs font-medium uppercase tracking-widest text-vfo-grey mb-2 text-center">
                   Need Help?
+                </p>
+                <p className="text-xs font-light text-vfo-grey text-center mb-3">
+                  Questions about measurements, installation, or shipping?
                 </p>
                 <a
                   href="tel:+1-778-871-7681"
                   className="flex items-center justify-center gap-2 px-6 py-3 border border-vfo-accent text-vfo-accent hover:bg-vfo-accent hover:text-white font-medium text-sm rounded-sm transition-all"
                 >
                   <PhoneIcon className="w-5 h-5" />
-                  <span>Call us at (778) 871-7681</span>
+                  <span>Click to Call</span>
                 </a>
-                <p className="text-xs font-light text-vfo-grey text-center mt-2">
-                  Questions about measurements, installation, or shipping?
-                </p>
               </div>
             </div>
           </div>
@@ -398,12 +398,6 @@ const Product = props => {
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>Direct shipping from Harbinger warehouse to Victoria</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>Free shipping on orders over 500 sq ft</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">

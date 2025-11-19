@@ -34,8 +34,8 @@ export default function SquareFootageCalculator({
             step="1"
             value={sqFt || ''}
             onChange={(e) => onSqFtChange(e.target.value)}
-            placeholder="Enter square feet"
-            className="w-48 px-4 py-2 border border-vfo-border rounded-md text-2xl font-medium text-vfo-charcoal focus:outline-none focus:ring-2 focus:ring-vfo-charcoal focus:border-transparent"
+            placeholder="eg. 1500"
+            className="w-48 px-4 py-2 border border-vfo-border rounded-md text-2xl font-medium text-vfo-charcoal placeholder:text-sm placeholder:font-light focus:outline-none focus:ring-2 focus:ring-vfo-charcoal focus:border-transparent"
           />
           <span className="text-lg font-light text-vfo-grey">sq. ft.</span>
         </div>

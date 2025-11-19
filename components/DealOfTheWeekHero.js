@@ -45,14 +45,14 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
           {/* LEFT: Editorial Copy Block */}
           <div className="relative px-6 md:px-12 lg:px-16 py-12 md:py-16 lg:py-20 flex flex-col justify-center bg-vfo-sand">
 
-            {/* Small caps label */}
-            <p className="text-[10px] md:text-xs font-medium tracking-[0.3em] uppercase text-vfo-accent mb-3">
+            {/* Urgent label */}
+            <p className="text-xl md:text-2xl lg:text-3xl font-bold uppercase text-vfo-accent mb-4 text-center">
               This Week Only
             </p>
 
             {/* Countdown Timer - Prominent placement */}
-            <div className="mb-5 bg-white/60 backdrop-blur-sm border border-vfo-accent/20 rounded-sm px-4 py-3 inline-block">
-              <p className="text-xs uppercase tracking-wider text-vfo-accent mb-2.5 font-medium">
+            <div className="mb-5 bg-white/60 backdrop-blur-sm border border-vfo-accent/20 rounded-sm px-4 py-3 inline-flex flex-col items-center">
+              <p className="text-xs uppercase tracking-wider text-vfo-accent mb-2.5 font-medium text-center">
                 Deal ends in:
               </p>
               <CountdownTimer targetDay={1} />
@@ -104,7 +104,7 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
             </ul>
 
             {/* CTA - Clean, rectangular Tilebar style */}
-            <div>
+            <div className="text-center">
               <Link
                 href={`/products/${weeklyDeal.id}`}
                 className="inline-flex items-center justify-center px-8 py-3 bg-vfo-charcoal text-white text-sm font-medium tracking-wide uppercase hover:bg-vfo-slate transition-colors"
@@ -118,7 +118,7 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
           </div>
 
           {/* RIGHT: Full-bleed lifestyle image */}
-          <div className="relative min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+          <div className="relative min-h-[300px] md:min-h-[400px] lg:min-h-[450px]">
             <Image
               src={weeklyDeal.image || '/images/Untitled design (21).png'}
               alt={`${weeklyDeal.name} installed in a beautiful interior`}

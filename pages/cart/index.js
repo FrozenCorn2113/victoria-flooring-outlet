@@ -6,8 +6,7 @@ import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
-import { calculateShipping, formatCanadianPostalCode } from '@/lib/shipping';
-import { calculateTotalCoverage } from '@/lib/products';
+import { calculateShipping } from '@/lib/shipping';
 import {
   XCircleIcon,
   XMarkIcon as XIcon,
@@ -25,8 +24,7 @@ const Cart = () => {
   // Calculate shipping when postal code or cart changes
   useEffect(() => {
     if (postalCode && cartCount > 0) {
-      const totalSqFt = calculateTotalCoverage(cartDetails);
-      const result = calculateShipping({ postalCode, totalSqFt });
+      const result = calculateShipping({ postalCode, cartDetails });
       setShippingResult(result);
     } else {
       setShippingResult(null);
@@ -229,21 +227,17 @@ const Cart = () => {
                 <div className="mt-4 p-4 bg-gray-50 rounded-md">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Base Rate:</span>
-                      <span>{formatCurrency(shippingResult.baseRate)}</span>
+                      <span>Zone:</span>
+                      <span className="font-medium">{shippingResult.zone}</span>
                     </div>
-                    {shippingResult.sqFtCharge > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span>Square Footage Charge:</span>
-                        <span>{formatCurrency(shippingResult.sqFtCharge)}</span>
-                      </div>
-                    )}
-                    {shippingResult.remoteSurcharge > 0 && (
-                      <div className="flex justify-between text-sm text-emerald-600">
-                        <span>Remote Area Surcharge:</span>
-                        <span>{formatCurrency(shippingResult.remoteSurcharge)}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-sm">
+                      <span>Boxes:</span>
+                      <span>{shippingResult.boxes} {shippingResult.boxes === 1 ? 'box' : 'boxes'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Rate:</span>
+                      <span>{formatCurrency(shippingResult.ratePerBox)} per box</span>
+                    </div>
                     <div className="flex justify-between font-medium pt-2 border-t">
                       <span>Shipping Total:</span>
                       <span className="text-emerald-600">{formatCurrency(shippingResult.shipping)}</span>
