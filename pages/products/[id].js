@@ -157,7 +157,7 @@ const Product = props => {
         />
       </Head>
       
-      <div className="min-h-screen bg-vfo-sand">
+      <div className="min-h-screen bg-vfo-sand overflow-x-hidden">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
           {/* Breadcrumb */}
           <Link href="/" className="text-sm text-vfo-grey hover:text-vfo-charcoal mb-6 inline-block">
