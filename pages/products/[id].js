@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { PhoneIcon } from '@heroicons/react/24/outline';
 import { formatCurrency } from '@/lib/utils';
 import { getUpsellProducts } from '@/lib/products';
-import { calculateShipping, formatCanadianPostalCode, validateCanadianPostalCode } from '@/lib/shipping';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
 
 import products from '../../products';
@@ -17,9 +16,6 @@ const Product = props => {
   const router = useRouter();
   const { cartCount, addItem } = useShoppingCart();
   const [sqFt, setSqFt] = useState(0);
-  const [postalCode, setPostalCode] = useState('');
-  const [shippingResult, setShippingResult] = useState(null);
-  const [calculatingShipping, setCalculatingShipping] = useState(false);
   const [adding, setAdding] = useState(false);
   const [showGoToCart, setShowGoToCart] = useState(false);
   const upsellProducts = getUpsellProducts(props.id);
@@ -52,23 +48,6 @@ const Product = props => {
   const savingsPercent = compareAtPricePerSqFt > 0 && pricePerSqFt > 0
     ? Math.round(((compareAtPricePerSqFt - pricePerSqFt) / compareAtPricePerSqFt) * 100)
     : 0;
-
-  const handleCalculateShipping = () => {
-    if (!sqFt || sqFt <= 0) {
-      toast.error('Please enter a square footage amount');
-      return;
-    }
-
-    if (!validateCanadianPostalCode(postalCode)) {
-      toast.error('Please enter a valid Canadian postal code (e.g., V8V 1A1)');
-      return;
-    }
-
-    setCalculatingShipping(true);
-    const result = calculateShipping({ postalCode, totalSqFt: sqFt });
-    setShippingResult(result);
-    setCalculatingShipping(false);
-  };
 
   const handleOnAddToCart = () => {
     setAdding(true);
@@ -229,52 +208,6 @@ const Product = props => {
                 >
                   Go to Cart →
                 </Link>
-              </div>
-
-              {/* Shipping Calculator */}
-              <div className="p-5 bg-white rounded-lg border border-vfo-border space-y-4">
-                <div>
-                  <label htmlFor="postalcode" className="block text-sm font-medium text-vfo-charcoal mb-2">
-                    Calculate Shipping (Optional)
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      id="postalcode"
-                      value={postalCode}
-                      onChange={(e) => {
-                        const formatted = formatCanadianPostalCode(e.target.value);
-                        setPostalCode(formatted);
-                      }}
-                      placeholder="V8V 1A1"
-                      maxLength="7"
-                      className="flex-1 px-4 py-2.5 border border-vfo-border rounded-sm focus:ring-1 focus:ring-vfo-charcoal focus:border-vfo-charcoal text-base text-vfo-charcoal uppercase"
-                    />
-                    <button
-                      onClick={handleCalculateShipping}
-                      disabled={calculatingShipping || !sqFt || !postalCode}
-                      className="px-5 py-2.5 bg-vfo-charcoal hover:bg-vfo-slate text-white text-sm font-medium rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {calculatingShipping ? 'Calculating...' : 'Calculate'}
-                    </button>
-                  </div>
-                  {shippingResult && shippingResult.valid && (
-                    <div className="mt-3 p-3 bg-vfo-sand rounded-sm">
-                      <p className="text-sm font-light text-vfo-grey">
-                        Shipping to {shippingResult.formattedPostalCode}:{' '}
-                        <span className="font-medium text-vfo-charcoal">
-                          {formatCurrency(shippingResult.shipping)}
-                        </span>
-                      </p>
-                      {shippingResult.isRemote && (
-                        <p className="text-xs font-light text-vfo-lightgrey mt-1">Remote area surcharge applied</p>
-                      )}
-                    </div>
-                  )}
-                  {shippingResult && !shippingResult.valid && (
-                    <p className="mt-2 text-sm text-red-600">{shippingResult.error}</p>
-                  )}
-                </div>
               </div>
 
               {/* Specs - Collapsed/Compact */}
