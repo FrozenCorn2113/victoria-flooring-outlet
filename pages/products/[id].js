@@ -157,7 +157,7 @@ const Product = props => {
         />
       </Head>
       
-      <div className="min-h-screen bg-vfo-sand overflow-x-hidden">
+      <div className="min-h-screen bg-vfo-sand">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
           {/* Breadcrumb */}
           <Link href="/" className="text-sm text-vfo-grey hover:text-vfo-charcoal mb-6 inline-block">
@@ -237,7 +237,7 @@ const Product = props => {
                   <label htmlFor="postalcode" className="block text-sm font-medium text-vfo-charcoal mb-2">
                     Calculate Shipping (Optional)
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       id="postalcode"
@@ -253,7 +253,7 @@ const Product = props => {
                     <button
                       onClick={handleCalculateShipping}
                       disabled={calculatingShipping || !sqFt || !postalCode}
-                      className="px-5 py-2.5 bg-vfo-charcoal hover:bg-vfo-slate text-white text-sm font-medium rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      className="px-5 py-2.5 bg-vfo-charcoal hover:bg-vfo-slate text-white text-sm font-medium rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {calculatingShipping ? 'Calculating...' : 'Calculate'}
                     </button>

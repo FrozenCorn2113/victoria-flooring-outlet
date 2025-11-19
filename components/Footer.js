@@ -23,7 +23,7 @@ const Footer = () => (
               </p>
               <p className="flex items-center gap-2">
                 <TruckIcon className="w-4 h-4 flex-shrink-0" />
-                <span>Free shipping on orders over 500 sq ft</span>
+                <span>Fast shipping across BC</span>
               </p>
               <p className="flex items-center gap-2">
                 <ShieldCheckIcon className="w-4 h-4 flex-shrink-0" />
@@ -35,7 +35,7 @@ const Footer = () => (
       </div>
 
       {/* Bottom section: Navigation grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-12 mb-12">
 
         {/* Quick Links */}
         <div>
@@ -51,30 +51,6 @@ const Footer = () => (
             <li>
               <Link href="/accessories" className="text-sm font-light text-white/80 hover:text-white transition-colors">
                 Accessories
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Support */}
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-widest text-white/50 mb-4">
-            Support
-          </h3>
-          <ul className="space-y-3">
-            <li>
-              <Link href="/flooring-deals-victoria-bc" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                FAQ
-              </Link>
-            </li>
-            <li>
-              <Link href="/installing-lvp-in-victoria" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                Installation Guide
-              </Link>
-            </li>
-            <li>
-              <Link href="/harbinger-luxury-vinyl-flooring" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                About Harbinger
               </Link>
             </li>
           </ul>
@@ -109,11 +85,6 @@ const Footer = () => (
               <a href="mailto:hello@victoriaflooringoutlet.ca" className="text-sm font-light text-white/80 hover:text-white transition-colors">
                 Contact
               </a>
-            </li>
-            <li>
-              <Link href="/privacy" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                Privacy Policy
-              </Link>
             </li>
           </ul>
         </div>
