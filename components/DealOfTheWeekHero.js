@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from '@/lib/utils';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { CountdownTimer } from './CountdownTimer';
+import { TalkToTy } from './TalkToTy';
 
 export function DealOfTheWeekHero({ weeklyDeal }) {
   if (!weeklyDeal) return null;
@@ -102,6 +103,9 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
                 </li>
               ))}
             </ul>
+
+            {/* Talk to Ty Helper Box */}
+            <TalkToTy />
 
             {/* CTA - Clean, rectangular Tilebar style */}
             <div className="text-center">

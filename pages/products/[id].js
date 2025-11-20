@@ -9,6 +9,7 @@ import { PhoneIcon } from '@heroicons/react/24/outline';
 import { formatCurrency } from '@/lib/utils';
 import { getUpsellProducts } from '@/lib/products';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
+import { TalkToTy } from '@/components/TalkToTy';
 
 import products from '../../products';
 
@@ -186,6 +187,9 @@ const Product = props => {
                 onSqFtChange={(value) => setSqFt(parseInt(value) || 0)}
                 currency="CAD"
               />
+
+              {/* Talk to Ty Helper Box */}
+              <TalkToTy />
 
               {/* Add to Cart Button */}
               <div className="space-y-3">

@@ -14,3 +14,4 @@ export { HarbingerInfoSection } from './HarbingerInfoSection';
 export { WhyChooseSection } from './WhyChooseSection';
 export { SecondaryCTASection } from './SecondaryCTASection';
 export { NextWeekPreviewSection } from './NextWeekPreviewSection';
+export { TalkToTy } from './TalkToTy';
