@@ -1,8 +1,7 @@
 import Head from 'next/head';
 import {
-  EmailSubscription,
   DealOfTheWeekHero,
-  SecondaryCTASection
+  NextWeekPreviewSection
 } from '@/components/index';
 import { getWeeklyDeal } from '@/lib/products';
 
@@ -58,23 +57,8 @@ export default function Home() {
         {/* 1. Hero - Full-width lifestyle with single strong CTA */}
         <DealOfTheWeekHero weeklyDeal={weeklyDeal} />
 
-        {/* 2. Email Signup - Refined messaging */}
-        <section className="py-16 md:py-20 bg-white">
-          <div className="max-w-3xl mx-auto px-4 md:px-6 text-center">
-            <h2 className="text-2xl md:text-3xl font-heading text-vfo-charcoal mb-4 tracking-tight">
-              Never miss a deal.
-            </h2>
-            <p className="text-[15px] font-light text-vfo-grey leading-relaxed mb-8">
-              Get next week's exclusive flooring deal delivered every Monday. One email, no spam, pure savings.
-            </p>
-            <div className="max-w-md mx-auto">
-              <EmailSubscription />
-            </div>
-          </div>
-        </section>
-
-        {/* 6. Secondary CTA - Reinforcement */}
-        <SecondaryCTASection weeklyDeal={weeklyDeal} />
+        {/* 2. Next Week Preview - Blurred teaser with newsletter signup */}
+        <NextWeekPreviewSection />
       </main>
     </>
   );
