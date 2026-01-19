@@ -9,7 +9,7 @@ export default function Home({ weeklyDeal }) {
     <>
       <Head>
         <title>Victoria Flooring Outlet - Deal of the Week | Premium Flooring Deals in Victoria, BC</title>
-        <meta name="description" content="Get this week's exclusive flooring deal from Victoria Flooring Outlet. Premium Harbinger luxury vinyl flooring at warehouse prices. Free shipping on orders over 500 sq ft. Serving Victoria and all Vancouver Island including Nanaimo, Comox Valley, and Cowichan Valley." />
+        <meta name="description" content="Get this week's exclusive flooring deal from Victoria Flooring Outlet. Premium Harbinger luxury vinyl flooring at outlet pricing. Free shipping on orders over 500 sq ft. Serving Victoria and all Vancouver Island including Nanaimo, Comox Valley, and Cowichan Valley." />
         <link rel="canonical" href="https://victoriaflooringoutlet.ca/" />
 
         {/* LocalBusiness Schema.org markup for SEO */}
@@ -21,7 +21,7 @@ export default function Home({ weeklyDeal }) {
               '@type': 'LocalBusiness',
               '@id': 'https://victoriaflooringoutlet.ca',
               name: 'Victoria Flooring Outlet',
-              description: 'Premium flooring deals across Vancouver Island. Weekly deals on luxury vinyl plank, laminate, and hardwood flooring at warehouse prices. Serving Victoria, Nanaimo, Comox Valley, Cowichan Valley, and all Vancouver Island communities.',
+              description: 'Premium flooring deals across Vancouver Island. Weekly deals on luxury vinyl plank, laminate, and hardwood flooring at outlet pricing. Serving Victoria, Nanaimo, Comox Valley, Cowichan Valley, and all Vancouver Island communities.',
               url: 'https://victoriaflooringoutlet.ca',
               telephone: '+1-778-871-7681',
               email: 'hello@victoriaflooringoutlet.ca',

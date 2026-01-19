@@ -95,7 +95,7 @@ export function HomeHero({ weeklyDeal, onOrderDeal }) {
                   </li>
                   <li className="flex gap-2">
                     <span className="mt-1 h-4 w-4 rounded-full bg-vfo-grey"></span>
-                    <span>Shipped direct to Victoria from the warehouse</span>
+                    <span>Shipped direct to your door in Victoria</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="mt-1 h-4 w-4 rounded-full bg-vfo-grey"></span>

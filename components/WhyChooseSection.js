@@ -18,7 +18,7 @@ export function WhyChooseSection() {
               One Deal. Deep Savings.
             </h3>
             <p className="text-sm font-light text-vfo-grey leading-relaxed">
-              By focusing on one product each week, we secure warehouse pricing and pass the savings to you.
+              By focusing on one product each week, we negotiate exclusive pricing and pass the savings to you.
             </p>
           </div>
 

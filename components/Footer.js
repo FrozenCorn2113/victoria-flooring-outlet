@@ -12,7 +12,7 @@ const Footer = () => (
           <div>
             <Logo />
             <p className="mt-6 text-base font-light text-white/80 leading-relaxed max-w-md">
-              Premium flooring at warehouse prices. Every week, we source one exceptional deal from Harbinger Floors and pass the savings directly to you.
+              Premium flooring at outlet pricing. Every week, we feature an exceptional deal on Harbinger floors and pass the savings directly to you.
             </p>
           </div>
           <div className="flex flex-col md:items-end">

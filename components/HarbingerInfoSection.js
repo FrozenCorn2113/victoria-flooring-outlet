@@ -14,7 +14,7 @@ export function HarbingerInfoSection() {
           <div className="relative h-[300px] md:h-[400px] overflow-hidden">
             <Image
               src="/images/harbinger-warehouse.jpg"
-              alt="Harbinger Floors warehouse in Richmond, BC"
+              alt="Harbinger Floors facility in Richmond, BC"
               fill
               className="object-cover"
             />
@@ -23,20 +23,20 @@ export function HarbingerInfoSection() {
           {/* Right: Copy */}
           <div>
             <p className="text-xs font-medium tracking-widest uppercase text-vfo-accent mb-4">
-              Our Supplier
+              Featured Brand
             </p>
             <h2 className="text-3xl md:text-4xl font-heading text-vfo-charcoal mb-6 leading-tight">
-              Sourced from Harbinger Floors, Richmond BC
+              Crafted by Harbinger Floors in Richmond, BC
             </h2>
             <div className="space-y-4 text-[15px] font-light text-vfo-grey leading-relaxed">
               <p>
-                Every week, we partner with Harbinger Floors to bring you commercial-grade luxury vinyl plank at exceptional prices.
+                Every week, we highlight commercial-grade luxury vinyl plank from Harbinger Floors at exceptional prices.
               </p>
               <p>
                 Harbinger is a trusted Canadian manufacturer specializing in waterproof, scratch-resistant flooring built for real life—from busy families to high-traffic commercial spaces.
               </p>
               <p>
-                All products ship direct from their Richmond warehouse to your door in Victoria, ensuring freshness and fast delivery.
+                Orders ship direct to your door in Victoria, with fast, dependable delivery.
               </p>
             </div>
             <div className="mt-8">

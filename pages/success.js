@@ -47,7 +47,7 @@ const Success = () => {
           </h2>
           <p className="text-lg mt-3">Check your inbox for the receipt.</p>
           <p className="text-sm mt-2 text-gray-600">
-            Your order will be shipped directly from our warehouse partner, Harbinger.
+            Your order will be shipped directly to your door.
           </p>
         </div>
       )}
