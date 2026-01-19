@@ -6,7 +6,8 @@ import {
   addMessage,
   updateConversationStatus,
   getMessages,
-  getMessageCount
+  getMessageCount,
+  updateConversationLead
 } from '../../../lib/chat/db-chat';
 import {
   broadcastNewMessage,
@@ -18,7 +19,7 @@ import {
   buildContext,
   analyzeSentiment
 } from '../../../lib/chat/openai';
-import { validateMessage } from '../../../lib/chat/chat-utils';
+import { extractContactInfo, validateMessage } from '../../../lib/chat/chat-utils';
 
 // Simple in-memory rate limiting
 const rateLimitMap = new Map();
@@ -121,6 +122,12 @@ export default async function handler(req, res) {
         context
       }
     });
+
+    // Capture lead info if provided
+    const contactInfo = extractContactInfo(validation.message);
+    if (contactInfo.email || contactInfo.phone) {
+      await updateConversationLead(sessionId, contactInfo);
+    }
 
     // Broadcast customer message
     await broadcastNewMessage(sessionId, customerMessage);
