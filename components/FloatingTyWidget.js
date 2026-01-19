@@ -6,11 +6,13 @@ import { XMarkIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 import { ChatInterface } from './chat/ChatInterface';
 
 export function FloatingTyWidget() {
+  const DISMISS_STORAGE_KEY = 'tyWidgetBubbleDismissed';
   const [mounted, setMounted] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasScrollTriggered, setHasScrollTriggered] = useState(false);
   const [bubbleDismissed, setBubbleDismissed] = useState(false);
+  const [dismissChecked, setDismissChecked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatEnabled] = useState(process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true');
@@ -20,7 +22,21 @@ export function FloatingTyWidget() {
     setMounted(true);
   }, []);
 
+  // Check localStorage for dismissed state - must complete before showing bubble
   useEffect(() => {
+    if (!mounted) return;
+
+    const dismissed = window.localStorage.getItem(DISMISS_STORAGE_KEY) === 'true';
+    if (dismissed) {
+      setBubbleDismissed(true);
+    }
+    setDismissChecked(true);
+  }, [mounted]);
+
+  useEffect(() => {
+    // Wait for both mount AND dismiss check before starting timer
+    if (!mounted || !dismissChecked || bubbleDismissed) return;
+
     // Initial delay - show bubble after 2.5 seconds
     const delayTimer = setTimeout(() => {
       setShowBubble(true);
@@ -42,12 +58,13 @@ export function FloatingTyWidget() {
       clearTimeout(delayTimer);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [bubbleDismissed, hasScrollTriggered]);
+  }, [mounted, dismissChecked, bubbleDismissed, hasScrollTriggered]);
 
   const handleDismissBubble = (e) => {
     e.stopPropagation();
     setShowBubble(false);
     setBubbleDismissed(true);
+    window.localStorage.setItem(DISMISS_STORAGE_KEY, 'true');
   };
 
   const handleAvatarClick = () => {
@@ -55,6 +72,11 @@ export function FloatingTyWidget() {
       // If chat is open, just toggle it
       setShowChat(false);
     } else {
+      if (bubbleDismissed && !isExpanded) {
+        setBubbleDismissed(false);
+        setHasScrollTriggered(false);
+        window.localStorage.removeItem(DISMISS_STORAGE_KEY);
+      }
       setIsExpanded(!isExpanded);
     }
   };
@@ -109,10 +131,10 @@ export function FloatingTyWidget() {
   }
 
   return (
-    <div className="floating-ty-widget fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="floating-ty-widget fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
       {/* Chat Interface */}
       {showChat && (
-        <div className="animate-fade-in-up w-[350px] sm:w-[380px] h-[500px] sm:h-[550px] mb-2">
+        <div className="animate-fade-in-up w-[calc(100vw-2rem)] max-w-[350px] sm:w-[380px] sm:max-w-none h-[500px] sm:h-[550px] mb-2">
           <ChatInterface
             onClose={handleCloseChat}
             onMinimize={handleCloseChat}
@@ -122,7 +144,7 @@ export function FloatingTyWidget() {
 
       {/* Speech Bubble */}
       {showBubble && !isExpanded && !showChat && (
-        <div className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 max-w-[280px] relative">
+        <div className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-[calc(100vw-2rem)] max-w-[280px] relative">
           {/* Close button */}
           <button
             onClick={handleDismissBubble}
@@ -148,7 +170,7 @@ export function FloatingTyWidget() {
       {/* Expanded Contact Options */}
       {isExpanded && !showChat && (
         <div
-          className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-[280px]"
+          className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-[calc(100vw-2rem)] max-w-[280px]"
           role="dialog"
           aria-labelledby="ty-widget-title"
         >
