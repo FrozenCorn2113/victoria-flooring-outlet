@@ -125,16 +125,20 @@ export default function Terms() {
                   Warranty
                 </h2>
                 <p className="text-vfo-bluegrey leading-relaxed mb-4">
-                  All Harbinger flooring products sold through Victoria Flooring Outlet include the
-                  manufacturer's lifetime residential warranty. This warranty covers defects in material
-                  and workmanship under normal residential use.
+                  Harbinger flooring products sold through Victoria Flooring Outlet include Harbinger’s
+                  manufacturer warranty, which covers defects in material and workmanship under normal
+                  use as outlined in Harbinger’s written warranty guidelines.
                 </p>
                 <ul className="list-disc pl-6 text-vfo-bluegrey space-y-2 mb-4">
-                  <li>Warranty coverage is subject to the manufacturer's terms and conditions.</li>
+                  <li>Warranty coverage is provided by Harbinger and is subject to their terms and conditions.</li>
                   <li>Warranty does not cover damage from improper installation, misuse, or accidents.</li>
                   <li>Proof of purchase is required for all warranty claims.</li>
                   <li>Commercial installations may have different warranty terms.</li>
                 </ul>
+                <p className="text-vfo-bluegrey leading-relaxed">
+                  Victoria Flooring Outlet does not provide a separate store warranty; we can assist with
+                  documentation, but warranty decisions are made by Harbinger.
+                </p>
               </div>
 
               {/* Installation */}

@@ -177,7 +177,11 @@ const Cart = () => {
 
                   {/* Price */}
                   <div className="ml-16 text-right">
-                    {product.pricePerSqFt ? (
+                  {product.priceOnRequest ? (
+                    <p className="font-medium text-xl text-vfo-charcoal">
+                      {product.priceNote || 'Call for price'}
+                    </p>
+                  ) : product.pricePerSqFt ? (
                       <>
                         <p className="font-light text-sm text-gray-600">
                           ${product.pricePerSqFt.toFixed(2)}/sq ft

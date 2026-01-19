@@ -75,7 +75,11 @@ const ProductCard = props => {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs text-vfo-lightgrey mb-1">Price</p>
-            {props.pricePerSqFt ? (
+            {props.priceOnRequest ? (
+              <p className="text-lg font-medium text-vfo-charcoal">
+                {props.priceNote || 'Call for price'}
+              </p>
+            ) : props.pricePerSqFt ? (
               <p className="text-lg font-medium text-vfo-charcoal">
                 ${props.pricePerSqFt.toFixed(2)}/sq ft
               </p>

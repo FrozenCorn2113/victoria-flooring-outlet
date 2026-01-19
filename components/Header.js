@@ -22,9 +22,7 @@ const Header = () => {
               <span className="font-light">Lifetime Warranty</span>
             </span>
             <span className="flex items-center gap-2">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L8 7h3v5h2V7h3l-4-5zM7 13v8h10v-8h-2v6H9v-6H7z"/>
-              </svg>
+              <span className="text-sm" aria-hidden="true">🇨🇦</span>
               <span className="font-light">Proudly Canadian</span>
             </span>
           </div>

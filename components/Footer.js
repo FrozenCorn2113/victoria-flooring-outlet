@@ -73,6 +73,21 @@ const Footer = () => (
               </Link>
             </li>
             <li>
+              <Link href="/resources" className="text-sm font-light text-white/80 hover:text-white transition-colors">
+                Resources
+              </Link>
+            </li>
+            <li>
+              <a
+                href="/resources/harbinger-warranty-guideline.pdf"
+                className="text-sm font-light text-white/80 hover:text-white transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Harbinger Warranty (PDF)
+              </a>
+            </li>
+            <li>
               <Link href="/terms" className="text-sm font-light text-white/80 hover:text-white transition-colors">
                 Terms & Conditions
               </Link>

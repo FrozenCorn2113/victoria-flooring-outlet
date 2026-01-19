@@ -441,6 +441,16 @@ const Product = props => {
     props.warrantyResidential ||
     props.warrantyCommercial
   );
+  const showWarrantyLink = Boolean(
+    (props.brand && String(props.brand).toLowerCase().includes('harbinger')) ||
+    props.warranty ||
+    props.warrantyResidential ||
+    props.warrantyCommercial
+  );
+  const showHarbingerNosingInfo = !isAccessory && Boolean(
+    props.brand && String(props.brand).toLowerCase().includes('harbinger')
+  );
+  const warrantyPdfHref = '/resources/harbinger-warranty-guideline.pdf';
 
   // Calculate boxes needed for internal calculations (if needed)
   const boxesNeeded = props.coverageSqFtPerBox && sqFt > 0
@@ -774,6 +784,11 @@ const Product = props => {
                       {props.description}
                     </p>
                   )}
+                  {props.appearanceNote && (
+                    <p className="text-sm text-vfo-bluegrey">
+                      {props.appearanceNote}
+                    </p>
+                  )}
                   {overviewBullets.length > 0 && (
                     <ul className="list-disc pl-5 space-y-2 text-[15px] font-light text-vfo-grey">
                       {overviewBullets.map((item, index) => (
@@ -781,6 +796,20 @@ const Product = props => {
                       ))}
                     </ul>
                   )}
+                </div>
+              )}
+
+              {showWarrantyLink && (
+                <div className="bg-white border border-vfo-border rounded-lg px-4 py-3 text-sm text-vfo-charcoal">
+                  <span className="text-vfo-grey">Warranty:</span>
+                  <a
+                    href={warrantyPdfHref}
+                    className="ml-2 font-medium text-vfo-accent hover:text-teal-600"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Harbinger Warranty Guideline (PDF)
+                  </a>
                 </div>
               )}
 
@@ -804,14 +833,25 @@ const Product = props => {
                     </div>
                   </div>
                   <div className="border-t border-vfo-border pt-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-light text-vfo-grey">Unit Price</span>
-                      <span className="text-sm font-light text-vfo-charcoal">{formatCurrency(props.price)}</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-base font-medium text-vfo-charcoal">Total Price</span>
-                      <span className="text-xl font-medium text-vfo-charcoal">{formatCurrency(totalPrice * 100)}</span>
-                    </div>
+                    {props.priceOnRequest ? (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-light text-vfo-grey">Price</span>
+                        <span className="text-sm font-light text-vfo-charcoal">
+                          {props.priceNote || 'Call for price'}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-light text-vfo-grey">Unit Price</span>
+                          <span className="text-sm font-light text-vfo-charcoal">{formatCurrency(props.price)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="text-base font-medium text-vfo-charcoal">Total Price</span>
+                          <span className="text-xl font-medium text-vfo-charcoal">{formatCurrency(totalPrice * 100)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -936,6 +976,34 @@ const Product = props => {
             </>
           )}
 
+          {showHarbingerNosingInfo && (
+            <section className="mb-8 p-6 bg-white rounded-lg border border-vfo-border">
+              <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
+                Nosings & Transitions
+              </h2>
+              <div className="space-y-3 text-[15px] font-light text-vfo-grey leading-relaxed">
+                <p>
+                  Stair nosing is the finished edge that protects the front of stairs or landings and gives your install a safe,
+                  clean edge. Transitions (like reducers and T-mouldings) are used where your flooring meets another surface or
+                  changes height.
+                </p>
+                <p>
+                  Harbinger offers colour-matched trims that complete the look. These trims are only available with the purchase
+                  of Harbinger products.
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Reducer — 2400mm x 45mm x 7.5mm (94.5” x 1.75” x 0.3”)</li>
+                  <li>T-Moulding — 2400mm x 45mm x 2.5mm (94.5” x 1.75” x 0.125”)</li>
+                  <li>Flush or Overlap Nosing — 2400mm x 50mm x 3mm (94.5” x 1.9” x 0.125”)</li>
+                  <li>SAC Square Nosing — 2400mm x 82mm x 35mm (94.5” x 3.25” x 1.4”)</li>
+                </ul>
+                <p>
+                  T-Mouldings and Reducers include a deep or shallow track to match the product thickness.
+                </p>
+              </div>
+            </section>
+          )}
+
           {/* Why This Week's Deal Section */}
           {props.isWeeklyDeal && (
             <section className="mb-12 p-6 bg-vfo-sand rounded-lg border border-vfo-border">
@@ -1002,9 +1070,14 @@ const Product = props => {
                           {upsell.description}
                         </p>
                       )}
+                      {upsell.appearanceNote && (
+                        <p className="text-xs text-vfo-bluegrey mb-3">
+                          {upsell.appearanceNote}
+                        </p>
+                      )}
 
                       <p className="text-lg font-medium text-vfo-charcoal mb-2">
-                        {formatCurrency(upsell.price)}
+                        {upsell.priceOnRequest ? (upsell.priceNote || 'Call for price') : formatCurrency(upsell.price)}
                       </p>
 
                       {/* Show coverage info if available and user has entered square footage */}

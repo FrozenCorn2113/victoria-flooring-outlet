@@ -26,9 +26,10 @@ export default function AccessoryRecommendationCard({ accessory, flooringSqFt })
     setQuantity(prev => Math.max(1, prev - 1));
   };
 
+  const hasCoverage = Boolean(accessory.coverage?.sqFtPerUnit);
   const totalPrice = (accessory.price * quantity / 100).toFixed(2);
   const unitPrice = (accessory.price / 100).toFixed(2);
-  const totalCoverage = quantity * accessory.coverage.sqFtPerUnit;
+  const totalCoverage = hasCoverage ? quantity * accessory.coverage.sqFtPerUnit : 0;
 
   return (
     <div className="bg-white border border-vfo-muted/20 rounded-xl p-6 hover:shadow-md transition-shadow">
@@ -47,8 +48,16 @@ export default function AccessoryRecommendationCard({ accessory, flooringSqFt })
             {accessory.name}
           </h3>
           <p className="text-xs text-vfo-bluegrey">
-            ${unitPrice} per {accessory.subType?.toLowerCase() || 'unit'}
+            {accessory.priceOnRequest
+              ? (accessory.priceNote || 'Call for price')
+              : `$${unitPrice} per ${accessory.subType?.toLowerCase() || 'unit'}`
+            }
           </p>
+          {accessory.appearanceNote && (
+            <p className="text-xs text-vfo-muted mt-1">
+              {accessory.appearanceNote}
+            </p>
+          )}
         </div>
       </div>
 
@@ -60,9 +69,16 @@ export default function AccessoryRecommendationCard({ accessory, flooringSqFt })
         <p className="text-xs text-teal-700">
           Based on {flooringSqFt} sq ft flooring
         </p>
-        <p className="text-xs text-teal-600 mt-1">
-          {accessory.coverageDescription}
-        </p>
+        {accessory.coverageDescription && (
+          <p className="text-xs text-teal-600 mt-1">
+            {accessory.coverageDescription}
+          </p>
+        )}
+        {!hasCoverage && (
+          <p className="text-xs text-teal-600 mt-1">
+            Match trim to your flooring color for a finished edge.
+          </p>
+        )}
       </div>
 
       {/* Quantity Selector */}
@@ -84,9 +100,11 @@ export default function AccessoryRecommendationCard({ accessory, flooringSqFt })
             <div className="text-2xl font-bold text-vfo-slate">
               {quantity}
             </div>
+          {hasCoverage && (
             <div className="text-xs text-vfo-bluegrey">
               {totalCoverage} sq ft total
             </div>
+          )}
           </div>
 
           <button
@@ -104,7 +122,7 @@ export default function AccessoryRecommendationCard({ accessory, flooringSqFt })
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-medium text-vfo-muted">Total:</span>
           <span className="text-2xl font-bold text-vfo-slate">
-            ${totalPrice}
+            {accessory.priceOnRequest ? (accessory.priceNote || 'Call for price') : `$${totalPrice}`}
           </span>
         </div>
       </div>

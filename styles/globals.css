@@ -63,6 +63,11 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   /* Screen reader only - visible on focus */
   .sr-only {
     position: absolute;
