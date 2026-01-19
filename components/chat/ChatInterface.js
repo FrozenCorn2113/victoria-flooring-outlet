@@ -22,8 +22,52 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
     welcomeMessage,
     suggestedQuestions,
     sendMessage,
-    initialized
+    leadInfo,
+    leadCaptured,
+    setLeadInfo,
+    setLeadCaptured,
+    initialized,
+    sessionId
   } = useChat(context);
+
+  const [leadError, setLeadError] = useState(null);
+  const [leadSaving, setLeadSaving] = useState(false);
+
+  const handleLeadChange = (field, value) => {
+    setLeadInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    if (!sessionId) return;
+
+    setLeadError(null);
+    setLeadSaving(true);
+
+    try {
+      const response = await fetch('/api/chat/lead-capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          name: leadInfo.name,
+          email: leadInfo.email,
+          phone: leadInfo.phone
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Unable to save contact info');
+      }
+
+      setLeadCaptured(true);
+    } catch (err) {
+      setLeadError(err.message || 'Unable to save contact info');
+    } finally {
+      setLeadSaving(false);
+    }
+  };
 
   // Scroll to bottom when new messages arrive
   const scrollToBottom = useCallback(() => {
@@ -84,8 +128,56 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
           </div>
         )}
 
+        {/* Required lead capture */}
+        {initialized && !leadCaptured && (
+          <div className="bg-[#F7F5F1] border border-[#E8E4DD] rounded-xl p-4 mb-4">
+            <p className="text-sm font-medium text-[#1E1A15] mb-2">
+              Before we chat, please share your details
+            </p>
+            <p className="text-xs text-[#8A7F71] mb-3">
+              This lets Ty follow up with you directly.
+            </p>
+            <form onSubmit={handleLeadSubmit} className="space-y-2">
+              <input
+                type="text"
+                value={leadInfo.name}
+                onChange={(e) => handleLeadChange('name', e.target.value)}
+                placeholder="Full name"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
+                required
+              />
+              <input
+                type="email"
+                value={leadInfo.email}
+                onChange={(e) => handleLeadChange('email', e.target.value)}
+                placeholder="Email address"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
+                required
+              />
+              <input
+                type="tel"
+                value={leadInfo.phone}
+                onChange={(e) => handleLeadChange('phone', e.target.value)}
+                placeholder="Phone number"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
+                required
+              />
+              {leadError && (
+                <p className="text-xs text-red-600">{leadError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={leadSaving}
+                className="w-full bg-[#1E1A15] text-white py-2 rounded-lg text-sm font-semibold hover:bg-black disabled:opacity-50"
+              >
+                {leadSaving ? 'Saving...' : 'Continue to chat'}
+              </button>
+            </form>
+          </div>
+        )}
+
         {/* Welcome message (only if no messages yet) */}
-        {initialized && messages.length === 0 && welcomeMessage && (
+        {initialized && leadCaptured && messages.length === 0 && welcomeMessage && (
           <WelcomeMessage
             message={welcomeMessage}
             suggestedQuestions={suggestedQuestions}
@@ -123,10 +215,12 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
       {/* Input */}
       <ChatInput
         onSend={sendMessage}
-        disabled={isLoading || !initialized}
+        disabled={isLoading || !initialized || !leadCaptured}
         placeholder={
           !initialized
             ? 'Connecting...'
+            : !leadCaptured
+            ? 'Please enter your details above to start...'
             : sessionStatus === 'human_handling'
             ? 'Message Ty...'
             : 'Ask about flooring, products, or services...'

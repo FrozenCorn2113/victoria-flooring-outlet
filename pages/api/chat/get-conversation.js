@@ -27,6 +27,9 @@ export default async function handler(req, res) {
       status: conversation.status,
       assignedTo: conversation.assigned_to,
       requiresHuman: conversation.requires_human,
+      customerName: conversation.customer_name,
+      customerEmail: conversation.customer_email,
+      customerPhone: conversation.customer_phone,
       createdAt: conversation.created_at,
       updatedAt: conversation.updated_at,
       messages: conversation.messages.map(msg => ({

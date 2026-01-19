@@ -21,6 +21,8 @@ export function useChat(initialContext = {}) {
   const [tyOnline, setTyOnline] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [leadInfo, setLeadInfo] = useState({ name: '', email: '', phone: '' });
+  const [leadCaptured, setLeadCaptured] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   const contextRef = useRef(initialContext);
@@ -82,6 +84,11 @@ export function useChat(initialContext = {}) {
         const data = await response.json();
         setMessages(data.messages || []);
         setSessionStatus(data.status);
+        const name = data.customerName || '';
+        const email = data.customerEmail || '';
+        const phone = data.customerPhone || '';
+        setLeadInfo({ name, email, phone });
+        setLeadCaptured(Boolean(name && email && phone));
       }
     } catch (err) {
       console.error('Error loading messages:', err);
@@ -270,6 +277,10 @@ export function useChat(initialContext = {}) {
     welcomeMessage,
     suggestedQuestions,
     sendMessage,
+    leadInfo,
+    leadCaptured,
+    setLeadInfo,
+    setLeadCaptured,
     initialized,
     connected,
     sessionId
