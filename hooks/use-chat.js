@@ -230,7 +230,24 @@ export function useChat(initialContext = {}) {
         )
       );
 
-      // Note: AI response will come through Pusher
+      // If Pusher is unavailable, fall back to API response
+      if (data.aiResponse && data.aiResponse.message) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === data.aiResponse.id)) {
+            return prev;
+          }
+          return [
+            ...prev,
+            {
+              id: data.aiResponse.id,
+              sender: 'ai',
+              message: data.aiResponse.message,
+              createdAt: new Date().toISOString(),
+              metadata: { confidence: data.aiResponse.confidence }
+            }
+          ];
+        });
+      }
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err.message || 'Failed to send message. Please try again.');
