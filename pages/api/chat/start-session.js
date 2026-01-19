@@ -16,18 +16,22 @@ export default async function handler(req, res) {
 
     // Check if session already exists
     if (existingSessionId) {
-      const existingConversation = await getConversationBySessionId(existingSessionId);
+      try {
+        const existingConversation = await getConversationBySessionId(existingSessionId);
 
-      if (existingConversation && existingConversation.status !== 'resolved') {
-        // Return existing session
-        return res.status(200).json({
-          sessionId: existingSessionId,
-          conversationId: existingConversation.id,
-          isExisting: true,
-          status: existingConversation.status,
-          welcomeMessage: null, // Don't show welcome for existing session
-          suggestedQuestions: getSuggestedQuestions()
-        });
+        if (existingConversation && existingConversation.status !== 'resolved') {
+          // Return existing session
+          return res.status(200).json({
+            sessionId: existingSessionId,
+            conversationId: existingConversation.id,
+            isExisting: true,
+            status: existingConversation.status,
+            welcomeMessage: null, // Don't show welcome for existing session
+            suggestedQuestions: getSuggestedQuestions()
+          });
+        }
+      } catch (dbError) {
+        console.error('Chat DB lookup failed for existing session, continuing:', dbError);
       }
     }
 
