@@ -131,10 +131,10 @@ export function FloatingTyWidget() {
   }
 
   return (
-    <div className="floating-ty-widget fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
+    <div className="floating-ty-widget fixed bottom-4 left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
       {/* Chat Interface */}
       {showChat && (
-        <div className="animate-fade-in-up w-[calc(100vw-2rem)] max-w-[350px] sm:w-[380px] sm:max-w-none h-[500px] sm:h-[550px] mb-2">
+        <div className="animate-fade-in-up w-full max-w-[350px] sm:w-[380px] sm:max-w-none h-[500px] sm:h-[550px] mb-2">
           <ChatInterface
             onClose={handleCloseChat}
             onMinimize={handleCloseChat}
@@ -144,7 +144,7 @@ export function FloatingTyWidget() {
 
       {/* Speech Bubble */}
       {showBubble && !isExpanded && !showChat && (
-        <div className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-[calc(100vw-2rem)] max-w-[280px] relative">
+        <div className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-full max-w-[280px] relative">
           {/* Close button */}
           <button
             onClick={handleDismissBubble}
@@ -170,7 +170,7 @@ export function FloatingTyWidget() {
       {/* Expanded Contact Options */}
       {isExpanded && !showChat && (
         <div
-          className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-[calc(100vw-2rem)] max-w-[280px]"
+          className="animate-fade-in-up bg-white rounded-xl shadow-lg border border-[#D6D1C8] p-4 w-full max-w-[280px]"
           role="dialog"
           aria-labelledby="ty-widget-title"
         >

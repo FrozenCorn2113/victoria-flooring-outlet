@@ -55,6 +55,10 @@
   /* Safe area insets for notched devices (iPhone X+, iPad Pro) */
   @supports (padding: max(0px)) {
     body {
+      padding: 0;
+    }
+
+    #__next {
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
       padding-bottom: max(0px, env(safe-area-inset-bottom));
@@ -64,7 +68,9 @@
 
 @layer base {
   html,
-  body {
+  body,
+  #__next {
+    max-width: 100%;
     overflow-x: hidden;
   }
 
@@ -97,5 +103,9 @@
   *:focus-visible {
     outline: 2px solid #8B7355;
     outline-offset: 2px;
+  }
+
+  .overflow-debug {
+    outline: 2px solid #ef4444 !important;
   }
 }

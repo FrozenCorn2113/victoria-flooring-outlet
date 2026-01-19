@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { CartProvider } from '@/hooks/use-shopping-cart';
@@ -19,6 +20,34 @@ function MyApp({ Component, pageProps }) {
 
   // Show FloatingTyWidget only on homepage and product pages
   const showTyWidget = router.pathname === '/' || router.pathname.startsWith('/products/');
+
+  useEffect(() => {
+    const debugEnabled = typeof window !== 'undefined'
+      && window.location.search.includes('debugOverflow=1');
+
+    if (!debugEnabled) return;
+
+    const markOverflowing = () => {
+      const elements = document.querySelectorAll('body *');
+      elements.forEach((el) => {
+        if (!(el instanceof HTMLElement)) return;
+        const hasOverflow = el.scrollWidth > el.clientWidth + 1;
+        el.classList.toggle('overflow-debug', hasOverflow);
+      });
+    };
+
+    const handleResize = () => requestAnimationFrame(markOverflowing);
+    const handleRouteChange = () => requestAnimationFrame(markOverflowing);
+
+    markOverflowing();
+    window.addEventListener('resize', handleResize);
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
   return (
     <>
       <Head>
