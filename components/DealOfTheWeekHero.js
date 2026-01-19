@@ -7,7 +7,32 @@ import { CheckIcon } from '@heroicons/react/24/outline';
 import { CountdownTimer } from './CountdownTimer';
 
 export function DealOfTheWeekHero({ weeklyDeal }) {
-  if (!weeklyDeal) return null;
+  if (!weeklyDeal) {
+    return (
+      <section className="bg-white border-b border-vfo-border/30">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-20">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-vfo-accent/10 text-vfo-accent border border-vfo-accent/20">
+              Weekly Deal
+            </span>
+            <h1 className="mt-6 text-3xl md:text-4xl lg:text-5xl font-medium text-vfo-charcoal leading-tight">
+              New deal coming soon
+            </h1>
+            <p className="mt-4 text-base md:text-lg text-vfo-grey">
+              We’re updating the weekly deal right now. Join the list and we’ll notify you as
+              soon as the next special goes live.
+            </p>
+            <Link
+              href="/#email-signup"
+              className="mt-6 inline-flex items-center justify-center px-8 py-3.5 bg-vfo-charcoal text-white text-base font-medium tracking-wide uppercase hover:bg-vfo-slate transition-colors rounded-sm shadow-sm"
+            >
+              Get Weekly Deals
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // Calculate price per sq ft - use pricePerSqFt if available, otherwise calculate from price and coverage
   const pricePerSqFt = weeklyDeal.pricePerSqFt
@@ -119,14 +144,22 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
             className="relative min-h-[300px] md:min-h-[400px] lg:min-h-[450px] block"
             aria-label={`View this week's deal: ${weeklyDeal.name}`}
           >
-            <Image
-              src={weeklyDeal.image || '/images/optimized/harbinger-coastal-oak-hero.webp'}
-              alt={`${weeklyDeal.name} installed in a beautiful interior`}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-              priority
-            />
+            {weeklyDeal.image ? (
+              <Image
+                src={weeklyDeal.image}
+                alt={`${weeklyDeal.name} installed in a beautiful interior`}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-vfo-lightgrey/40">
+                <span className="text-sm uppercase tracking-[0.2em] text-vfo-grey">
+                  Image coming soon
+                </span>
+              </div>
+            )}
 
             {/* Floating badge on image */}
             <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-2 shadow-lg">
