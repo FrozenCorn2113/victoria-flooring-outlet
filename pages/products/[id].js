@@ -761,7 +761,7 @@ const Product = props => {
                 <h1 className="text-3xl md:text-4xl font-heading tracking-wide text-vfo-charcoal mb-2 leading-tight">
                   {props.name}
                 </h1>
-                {props.brand && (
+                {props.brand && !props.name?.toLowerCase().includes(props.brand.toLowerCase()) && (
                   <p className="text-[15px] font-light text-vfo-grey mb-2">Brand: {props.brand}</p>
                 )}
               </div>
@@ -943,21 +943,22 @@ const Product = props => {
                 Why This Week's Deal is Special
               </h2>
               <p className="text-[15px] font-light text-vfo-grey leading-relaxed mb-3">
-                This week only, we're offering {props.name} at a special discounted price. This premium Harbinger flooring 
-                features commercial-grade quality and is perfect for high-traffic areas. Limited stock available this week.
+                This week only, we're offering {props.name} at a special discounted price. Built in Harbinger's Contract
+                Series, it pairs commercial-grade performance with refined, realistic visuals that elevate busy spaces.
+                Limited stock available this week.
               </p>
               <ul className="space-y-2 text-[15px] font-light text-vfo-grey">
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Direct shipping from Harbinger warehouse to Victoria</span>
+                  <span>Direct-to-door delivery for a smooth, hassle-free arrival</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Commercial-grade durability and style</span>
+                  <span>High-end look with commercial-grade durability</span>
                 </li>
               </ul>
             </section>
