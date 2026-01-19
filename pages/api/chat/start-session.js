@@ -69,8 +69,14 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error starting chat session:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     return res.status(500).json({
       error: 'Failed to start chat session',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       fallbackMessage: "Sorry, chat isn't available right now. Please text Ty at (778) 871-7681!"
     });
   }
