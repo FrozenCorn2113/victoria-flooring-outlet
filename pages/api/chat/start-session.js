@@ -35,36 +35,43 @@ export default async function handler(req, res) {
     const sessionId = existingSessionId || generateSessionId();
     const pusherChannel = getChatChannelName(sessionId);
 
-    // Create conversation in database
-    const conversation = await createConversation({
-      sessionId,
-      context: {
-        ...context,
-        startedAt: new Date().toISOString(),
-        userAgent: req.headers['user-agent'],
-      }
-    });
+    let conversation = null;
 
-    // Create chat session record
-    await upsertChatSession({
-      sessionId,
-      conversationId: conversation.id,
-      pusherChannel
-    });
+    try {
+      // Create conversation in database
+      conversation = await createConversation({
+        sessionId,
+        context: {
+          ...context,
+          startedAt: new Date().toISOString(),
+          userAgent: req.headers['user-agent'],
+        }
+      });
 
-    // Notify admin of new conversation
-    await notifyNewConversation(conversation);
+      // Create chat session record
+      await upsertChatSession({
+        sessionId,
+        conversationId: conversation.id,
+        pusherChannel
+      });
+
+      // Notify admin of new conversation
+      await notifyNewConversation(conversation);
+    } catch (dbError) {
+      console.error('Chat DB init failed, continuing in degraded mode:', dbError);
+    }
 
     // Welcome message
     const welcomeMessage = "Hi! I'm Ty's AI assistant. I can help answer questions about flooring, products, and services. What can I help you with today?";
 
     return res.status(200).json({
       sessionId,
-      conversationId: conversation.id,
+      conversationId: conversation?.id || null,
       isExisting: false,
       status: 'active',
       welcomeMessage,
-      suggestedQuestions: getSuggestedQuestions()
+      suggestedQuestions: getSuggestedQuestions(),
+      degraded: !conversation
     });
 
   } catch (error) {

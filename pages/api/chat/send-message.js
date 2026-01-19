@@ -65,11 +65,40 @@ export default async function handler(req, res) {
     });
   }
 
+  // Build context for AI (used for both normal and degraded mode)
+  const aiContext = buildContext({
+    pageUrl: context.pageUrl,
+    productViewed: context.productViewed,
+    cartContents: context.cartContents
+  });
+
   try {
     // Get conversation
-    const conversation = await getConversationBySessionId(sessionId);
+    let conversation = null;
+    try {
+      conversation = await getConversationBySessionId(sessionId);
+    } catch (dbLookupError) {
+      console.error('Chat DB lookup failed, continuing in degraded mode:', dbLookupError);
+    }
+
     if (!conversation) {
-      return res.status(404).json({ error: 'Conversation not found' });
+      const aiResult = await generateAIResponse({
+        messages: [{ sender: 'customer', message: validation.message }],
+        context: aiContext
+      });
+
+      return res.status(200).json({
+        success: true,
+        messageId: `temp_${Date.now()}`,
+        aiResponse: {
+          id: `ai_${Date.now()}`,
+          message: aiResult.message,
+          confidence: aiResult.confidence
+        },
+        needsHuman: aiResult.needsHuman,
+        humanHandling: false,
+        degraded: true
+      });
     }
 
     // Check if conversation is resolved
@@ -112,13 +141,6 @@ export default async function handler(req, res) {
     // Get message history for context
     const messageHistory = await getMessages(conversation.id);
     const messageCount = await getMessageCount(conversation.id);
-
-    // Build context for AI
-    const aiContext = buildContext({
-      pageUrl: context.pageUrl,
-      productViewed: context.productViewed,
-      cartContents: context.cartContents
-    });
 
     // Generate AI response
     const aiResult = await generateAIResponse({
@@ -186,9 +208,23 @@ export default async function handler(req, res) {
       await broadcastAIResponding(sessionId, false);
     } catch {}
 
-    return res.status(500).json({
-      error: 'Failed to process message',
-      fallbackMessage: "Sorry, I couldn't process that. Please try again or text Ty at (778) 871-7681!"
+    // Degraded fallback: attempt AI response without DB persistence
+    const aiResult = await generateAIResponse({
+      messages: [{ sender: 'customer', message: validation.message }],
+      context: aiContext
+    });
+
+    return res.status(200).json({
+      success: true,
+      messageId: `temp_${Date.now()}`,
+      aiResponse: {
+        id: `ai_${Date.now()}`,
+        message: aiResult.message,
+        confidence: aiResult.confidence
+      },
+      needsHuman: aiResult.needsHuman,
+      humanHandling: false,
+      degraded: true
     });
   }
 }
