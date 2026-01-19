@@ -67,7 +67,7 @@ export default function FlooringDealsVictoriaBC({ weeklyDeal }) {
 
         <ul className="list-disc list-inside space-y-3 text-base text-vfo-bluegrey mb-8 leading-relaxed pl-4">
           <li>Exclusive weekly deals on premium flooring products</li>
-          <li>Direct shipping from our warehouse partner, Harbinger</li>
+          <li>Direct-to-door delivery across Victoria and nearby areas</li>
           <li>Free shipping on orders over 500 square feet</li>
           <li>Competitive prices on luxury vinyl plank, laminate, and more</li>
           <li>Trusted installers available throughout Victoria and surrounding areas</li>
