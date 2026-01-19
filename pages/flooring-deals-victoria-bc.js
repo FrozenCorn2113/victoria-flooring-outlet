@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { getWeeklyDeal } from '@/lib/products';
+import { getWeeklyDeal } from '@/lib/products-server';
 import { formatCurrency } from '@/lib/utils';
 import SeoPageLayout from '@/components/SeoPageLayout';
 

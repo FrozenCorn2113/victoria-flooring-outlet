@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../lib/stripe';
-import { getWeeklyDeal } from '../../../lib/products';
+import { getWeeklyDeal } from '../../../lib/products-server';
 import { calculateShipping, validateCanadianPostalCode } from '../../../lib/shipping';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
