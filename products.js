@@ -2,6 +2,7 @@ const products = [
   {
     id: 'harbinger-contract-coastal-oak',
     slug: 'harbinger-contract-coastal-oak',
+    sku: 'HARB-CONTRACT-COASTALOAK', // Harbinger SKU for inventory tracking
     name: 'Harbinger Contract Series – Coastal Oak',
     brand: 'Harbinger',
     collection: 'Contract Series',
@@ -26,23 +27,23 @@ const products = [
     warrantyResidential: 'Lifetime limited residential warranty',
     warrantyCommercial: '20-year light commercial warranty',
     boxesPerSkid: 84,
-    pricePerSqFt: 2.69, // weekly deal price
-    compareAtPricePerSqFt: 3.49, // regular price
+    pricePerSqFt: 4.99, // weekly deal price
+    compareAtPricePerSqFt: 6.49, // regular price
     currency: 'CAD',
-    image: '/images/Untitled design (21).png',
+    image: '/images/optimized/harbinger-coastal-oak-hero.webp',
     swatchImage: '/images/products/contract-coastal-oak-swatch.jpg',
     badge: 'Contract Series · Glue-down',
     shortTagline: 'Durable, stylish glue-down vinyl at contractor pricing.',
-    description: 'Durable, stylish and low-maintenance glue-down vinyl at contractor pricing. 100% waterproof luxury vinyl plank suitable for kitchens, basements and rentals.',
+    description: 'Harbinger Contract Series - Coastal Oak is a commercial-grade glue-down luxury vinyl plank with a realistic embossed oak texture. Built for busy homes and light commercial spaces, it delivers waterproof performance, scratch resistance, and easy maintenance. The 2.0 mm profile with a 12-mil wear layer keeps it durable and stable for kitchens, basements, rentals, and high-traffic areas.',
     warranty: 'Lifetime limited residential warranty / 20-year light commercial warranty',
     // Legacy fields for backward compatibility
     thickness: 2.0, // mm
     wearLayer: 12, // mil
     // Calculate price from pricePerSqFt for backward compatibility
-    price: Math.round(2.69 * 48 * 100), // $129.12 = 12912 cents
+    price: Math.round(4.99 * 48 * 100), // $239.52 = 23952 cents
     isWeeklyDeal: true,
-    compareAtPrice: Math.round(3.49 * 48 * 100), // $167.52 = 16752 cents
-    upsellSkus: ['price_glue_001', 'price_underlay_001', 'price_transition_001'],
+    compareAtPrice: Math.round(6.49 * 48 * 100), // $311.52 = 31152 cents
+    upsellSkus: ['uzin_ke_2000_s', 'price_underlay_001', 'price_transition_001'],
     rating: {
       count: 127,
       rate: 4.8,
@@ -57,32 +58,61 @@ const products = [
     ],
   },
   {
-    id: 'price_glue_001',
-    name: 'Premium Flooring Adhesive - 1 Gallon',
-    price: 3499, // $34.99
-    currency: 'CAD',
-    image: '/accessories/flooring-glue.jpg',
-    description: 'Professional-grade adhesive for luxury vinyl flooring installation. Waterproof and long-lasting bond.',
-    brand: 'Harbinger',
+    id: 'uzin_ke_2000_s',
+    slug: 'uzin-ke-2000-s-adhesive',
+    name: 'UZIN KE 2000 S - Universal Adhesive (1 Gallon)',
+    brand: 'UZIN',
     type: 'Accessory',
+    subType: 'Adhesive',
+    price: 8999, // $89.99 per gallon
+    currency: 'CAD',
+    image: '/images/uzin-ke-2000-s.png',
+    description: 'Professional-grade universal adhesive for resilient flooring installations. This wet or pressure-sensitive dispersion adhesive works with most vinyl, textile, and wall coverings and pairs with UZIN underlays. Coverage ranges from 75-210 sq ft per gallon depending on trowel notch and substrate conditions, making it a reliable choice for both small repairs and full room installs.',
+    shortTagline: 'Professional-grade universal adhesive for all resilient flooring.',
     isWeeklyDeal: false,
     compareAtPrice: null,
     upsellSkus: [],
+    coverage: {
+      sqFtPerUnit: 150, // Conservative middle estimate (between 75-210 range)
+      buffer: 1.0, // No buffer - exact coverage
+      recommendedFor: ['Luxury Vinyl Plank', 'Laminate'], // Flooring types this adhesive works with
+    },
     rating: {
-      count: 89,
-      rate: 4.6,
+      count: 45,
+      rate: 4.8,
+    },
+    highlights: [
+      'Universal wet and pressure sensitive adhesive',
+      'Covers 75-210 sq ft per gallon (depending on application method and flooring type)',
+      'Short waiting time for faster installation',
+      'Excellent application properties',
+      'Good grab with stringing for easy positioning',
+      'Suitable for all common resilient coverings, textile coverings, and wall coverings',
+      'Compatible with UZIN insulation/installation underlays',
+      'Professional-grade dispersion adhesive',
+    ],
+    specifications: {
+      size: '1 Gallon (3.78 L)',
+      coverage: '75-210 sq ft per gallon (varies by application method and flooring type)',
+      waitingTime: '24-72 hours before walking on floor',
+      applicationMethod: 'Trowel application',
+      temperature: 'Best used at room temperature (60-77°F)',
+      shelfLife: '12 months when stored properly',
     },
   },
   {
     id: 'price_underlay_001',
-    name: 'Premium Underlayment - 100 sq ft Roll',
-    price: 4999, // $49.99
-    currency: 'CAD',
-    image: '/accessories/underlay.jpg',
-    description: 'High-quality foam underlayment for sound reduction and moisture protection. 100 square feet per roll.',
-    brand: 'Harbinger',
+    slug: 'quietwalk-plus-underlayment',
+    name: 'QuietWalk PLUS Premium Underlayment - 360 sq ft Roll',
+    brand: 'QuietWalk',
     type: 'Accessory',
-    coverageSqFtPerBox: 100,
+    subType: 'Underlayment',
+    price: 12999, // $129.99 - typical price for 360 sq ft roll
+    currency: 'CAD',
+    image: '/images/underlayment-optimized.jpg',
+    description: 'Premium 360 sq ft underlayment roll with DriWick Technology for hardwood, laminate, engineered wood, and bamboo floors. It includes a moisture-managing vapor barrier, reduces noise transmission, and smooths minor subfloor imperfections. Ideal for glue-down or floating installs where added comfort and sound control are important.',
+    shortTagline: 'Premium acoustic underlayment with moisture protection.',
+    coverageSqFtPerBox: 360,
     isWeeklyDeal: false,
     compareAtPrice: null,
     upsellSkus: [],
@@ -90,39 +120,27 @@ const products = [
       count: 156,
       rate: 4.7,
     },
-  },
-  {
-    id: 'price_transition_001',
-    name: 'T-Molding Transition Strip - 48"',
-    price: 1999, // $19.99
-    currency: 'CAD',
-    image: '/accessories/transition-strip.jpg',
-    description: 'Matching T-molding transition strip for doorways and room transitions. 48 inches long.',
-    brand: 'Harbinger',
-    type: 'Accessory',
-    isWeeklyDeal: false,
-    compareAtPrice: null,
-    upsellSkus: [],
-    rating: {
-      count: 73,
-      rate: 4.5,
-    },
-  },
-  {
-    id: 'price_trim_001',
-    name: 'Quarter Round Molding - 8ft',
-    price: 1299, // $12.99
-    currency: 'CAD',
-    image: '/accessories/quarter-round.jpg',
-    description: 'Quarter round molding to finish edges and cover expansion gaps. 8 feet per piece.',
-    brand: 'Harbinger',
-    type: 'Accessory',
-    isWeeklyDeal: false,
-    compareAtPrice: null,
-    upsellSkus: [],
-    rating: {
-      count: 94,
-      rate: 4.4,
+    highlights: [
+      'Covers 360 sq ft - Roll Size: 60 ft x 6 ft x 1/8 in',
+      'DriWick Technology wicks away subfloor moisture while protecting flooring materials',
+      'Antimicrobial treated recycled fibers for moisture protection',
+      'Superior noise reduction - absorbs sound and keeps it from traveling to other rooms',
+      'Performance upgrade over poly foams - economical alternative to rubber and cork',
+      'Vapor barrier specially formulated to accept glue-down installations',
+      'Use with hardwood, laminate, engineered wood, and bamboo',
+      'Compatible with both glue-down and floating applications',
+      'NOT for luxury vinyl plank - see QuietWalk Luxury Vinyl for LVP',
+    ],
+    specifications: {
+      model: 'QW360PLUS',
+      sku: '1001755087',
+      rollSize: '60 ft x 6 ft x 1/8 in',
+      packageSize: '73 in x 13 in x 13 in',
+      coverage: '360 sq ft per roll',
+      thickness: '1/8 inch',
+      applications: 'Glue-down and floating installations',
+      compatibleWith: 'Hardwood, laminate, engineered wood, bamboo',
+      notCompatibleWith: 'Luxury vinyl plank (use QuietWalk Luxury Vinyl instead)',
     },
   },
 ];

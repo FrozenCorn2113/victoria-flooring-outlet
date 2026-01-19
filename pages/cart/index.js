@@ -7,6 +7,8 @@ import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
 import { calculateShipping } from '@/lib/shipping';
+import { getSmartRecommendations } from '@/lib/products';
+import AccessoryRecommendationCard from '@/components/AccessoryRecommendationCard';
 import {
   XCircleIcon,
   XMarkIcon as XIcon,
@@ -20,6 +22,9 @@ const Cart = () => {
   const [redirecting, setRedirecting] = useState(false);
   const [postalCode, setPostalCode] = useState('');
   const [shippingResult, setShippingResult] = useState(null);
+
+  // Get smart recommendations based on cart contents
+  const smartRecommendations = getSmartRecommendations(cartDetails);
 
   // Calculate shipping when postal code or cart changes
   useEffect(() => {
@@ -199,6 +204,30 @@ const Cart = () => {
                 </div>
               </div>
             ))}
+
+            {/* Recommended Accessories */}
+            {smartRecommendations.recommendations.length > 0 && (
+              <div className="mt-12 mb-8 pb-8 border-b border-gray-200">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-heading tracking-wide mb-2">
+                    Complete Your Project
+                  </h3>
+                  <p className="text-base text-gray-600">
+                    Based on your {smartRecommendations.totalFlooringSqFt} sq ft flooring order
+                  </p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  {smartRecommendations.recommendations.map(accessory => (
+                    <AccessoryRecommendationCard
+                      key={accessory.id}
+                      accessory={accessory}
+                      flooringSqFt={smartRecommendations.totalFlooringSqFt}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Shipping Calculator */}
             <div className="mt-8 border-t pt-6">

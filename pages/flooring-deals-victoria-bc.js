@@ -4,17 +4,16 @@ import { getWeeklyDeal } from '@/lib/products';
 import { formatCurrency } from '@/lib/utils';
 import SeoPageLayout from '@/components/SeoPageLayout';
 
-export default function FlooringDealsVictoriaBC() {
-  const weeklyDeal = getWeeklyDeal();
-
+export default function FlooringDealsVictoriaBC({ weeklyDeal }) {
   return (
     <>
       <Head>
         <title>Flooring Deals Victoria BC | Victoria Flooring Outlet</title>
-        <meta 
-          name="description" 
-          content="Find the best flooring deals in Victoria, BC. Weekly specials on luxury vinyl plank, laminate, and hardwood flooring. Free shipping on orders over 500 sq ft. Shop now!" 
+        <meta
+          name="description"
+          content="Find the best flooring deals in Victoria, BC. Weekly specials on luxury vinyl plank, laminate, and hardwood flooring. Free shipping on orders over 500 sq ft. Shop now!"
         />
+        <link rel="canonical" href="https://victoriaflooringoutlet.ca/flooring-deals-victoria-bc" />
       </Head>
 
       <SeoPageLayout title="Flooring Deals Victoria BC">
@@ -36,19 +35,25 @@ export default function FlooringDealsVictoriaBC() {
             <p className="text-base text-vfo-bluegrey mb-4 leading-relaxed">{weeklyDeal.description}</p>
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <span className="text-3xl font-bold text-vfo-accent">
-                {formatCurrency(weeklyDeal.price)}
+                {weeklyDeal.pricePerSqFt
+                  ? `${formatCurrency(weeklyDeal.pricePerSqFt * 100)} / sq ft`
+                  : formatCurrency(weeklyDeal.price)}
               </span>
-              {weeklyDeal.compareAtPrice && (
+              {weeklyDeal.compareAtPricePerSqFt || weeklyDeal.compareAtPrice ? (
                 <span className="text-xl text-vfo-muted line-through">
-                  {formatCurrency(weeklyDeal.compareAtPrice)}
+                  {weeklyDeal.compareAtPricePerSqFt
+                    ? `${formatCurrency(weeklyDeal.compareAtPricePerSqFt * 100)} / sq ft`
+                    : formatCurrency(weeklyDeal.compareAtPrice)}
                 </span>
-              )}
+              ) : null}
             </div>
-            <Link href={`/products/${weeklyDeal.id}`}>
-              <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-                View This Week's Deal →
-              </a>
-            </Link>
+            {weeklyDeal.id ? (
+              <Link href={`/products/${weeklyDeal.id}`}>
+                <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
+                  View This Week's Deal →
+                </a>
+              </Link>
+            ) : null}
           </div>
         ) : (
           <p className="text-base text-vfo-bluegrey mb-8">
@@ -116,4 +121,13 @@ export default function FlooringDealsVictoriaBC() {
       </SeoPageLayout>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const weeklyDeal = await getWeeklyDeal();
+  return {
+    props: {
+      weeklyDeal,
+    }
+  };
 }

@@ -1,11 +1,9 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { getWeeklyDeal } from '@/lib/products';
 import { formatCurrency } from '@/lib/utils';
 import SeoPageLayout from '@/components/SeoPageLayout';
 
-export default function HarbingerLuxuryVinylFlooring() {
-  const weeklyDeal = getWeeklyDeal();
+export default function HarbingerLuxuryVinylFlooring({ weeklyDeal }) {
   const isHarbinger = weeklyDeal && weeklyDeal.brand === 'Harbinger';
 
   return (
@@ -36,17 +34,25 @@ export default function HarbingerLuxuryVinylFlooring() {
             <p className="text-base text-vfo-bluegrey mb-4 leading-relaxed">{weeklyDeal.description}</p>
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <span className="text-3xl font-bold text-vfo-accent">
-                {formatCurrency(weeklyDeal.price)}
+                {weeklyDeal.pricePerSqFt
+                  ? `${formatCurrency(weeklyDeal.pricePerSqFt * 100)} / sq ft`
+                  : formatCurrency(weeklyDeal.price)}
               </span>
-              {weeklyDeal.compareAtPrice && (
+              {weeklyDeal.compareAtPricePerSqFt || weeklyDeal.compareAtPrice ? (
                 <span className="text-xl text-vfo-muted line-through">
-                  {formatCurrency(weeklyDeal.compareAtPrice)}
+                  {weeklyDeal.compareAtPricePerSqFt
+                    ? `${formatCurrency(weeklyDeal.compareAtPricePerSqFt * 100)} / sq ft`
+                    : formatCurrency(weeklyDeal.compareAtPrice)}
                 </span>
-              )}
+              ) : null}
             </div>
-            <Link href={`/products/${weeklyDeal.id}`} className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-              Shop This Deal →
-            </Link>
+            {weeklyDeal.id ? (
+              <Link href={`/products/${weeklyDeal.id}`}>
+                <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
+                  Shop This Deal →
+                </a>
+              </Link>
+            ) : null}
           </div>
         ) : (
           <p className="text-base text-vfo-bluegrey mb-8">
@@ -137,4 +143,14 @@ export default function HarbingerLuxuryVinylFlooring() {
       </SeoPageLayout>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const { getWeeklyDeal } = await import('@/lib/products-server');
+  const weeklyDeal = await getWeeklyDeal();
+  return {
+    props: {
+      weeklyDeal,
+    }
+  };
 }

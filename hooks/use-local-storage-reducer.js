@@ -2,19 +2,31 @@ import { useEffect, useReducer, useRef } from 'react';
 import { isClient } from '@/lib/utils';
 
 const useLocalStorageReducer = (key = '', reducer, initialValue = null) => {
-  const [state, dispatch] = useReducer(reducer, initialValue, () => {
+  const [state, dispatch] = useReducer((currentState, action) => {
+    if (action?.type === '__LOCAL_STORAGE_INIT__') {
+      return action.state;
+    }
+    return reducer(currentState, action);
+  }, initialValue);
+
+  const firstRun = useRef(true);
+  const hasHydrated = useRef(false);
+
+  useEffect(() => {
+    if (hasHydrated.current) return;
+    hasHydrated.current = true;
+
     try {
       if (isClient) {
         const item = window.localStorage.getItem(key);
-        return item ? JSON.parse(item) : initialValue;
+        if (item) {
+          dispatch({ type: '__LOCAL_STORAGE_INIT__', state: JSON.parse(item) });
+        }
       }
-      return initialValue;
     } catch (error) {
-      return initialValue;
+      // Ignore storage errors and keep initialValue
     }
-  });
-
-  const firstRun = useRef(true);
+  }, [key]);
 
   useEffect(() => {
     if (firstRun.current) {

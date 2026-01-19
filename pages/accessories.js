@@ -27,10 +27,11 @@ export default function Accessories() {
     <>
       <Head>
         <title>Flooring Accessories | Victoria Flooring Outlet</title>
-        <meta 
-          name="description" 
-          content="Shop flooring accessories including glue, underlayment, transition strips, and molding. Essential supplies for your flooring installation project in Victoria, BC." 
+        <meta
+          name="description"
+          content="Shop flooring accessories including glue, underlayment, transition strips, and molding. Essential supplies for your flooring installation project. Serving Victoria and all Vancouver Island."
         />
+        <link rel="canonical" href="https://victoriaflooringoutlet.ca/accessories" />
       </Head>
 
       <div className="min-h-screen bg-vfo-bg">

@@ -19,7 +19,7 @@ const Footer = () => (
             <div className="space-y-3 text-sm font-light text-white/70">
               <p className="flex items-center gap-2">
                 <MapPinIcon className="w-4 h-4 flex-shrink-0" />
-                <span>Serving Victoria, BC and Vancouver Island</span>
+                <span>Serving Victoria, Nanaimo, Comox Valley, Cowichan Valley & all Vancouver Island</span>
               </p>
               <p className="flex items-center gap-2">
                 <TruckIcon className="w-4 h-4 flex-shrink-0" />
@@ -35,7 +35,7 @@ const Footer = () => (
       </div>
 
       {/* Bottom section: Navigation grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-12 mb-12">
+      <div className="grid grid-cols-2 gap-8 md:gap-12 mb-12">
 
         {/* Quick Links */}
         <div>
@@ -56,20 +56,6 @@ const Footer = () => (
           </ul>
         </div>
 
-        {/* For Pros */}
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-widest text-white/50 mb-4">
-            For Pros
-          </h3>
-          <ul className="space-y-3">
-            <li>
-              <Link href="/trusted-installers" className="text-sm font-light text-white/80 hover:text-white transition-colors">
-                Installer Network
-              </Link>
-            </li>
-          </ul>
-        </div>
-
         {/* Company */}
         <div>
           <h3 className="text-xs font-medium uppercase tracking-widest text-white/50 mb-4">
@@ -80,6 +66,11 @@ const Footer = () => (
               <a href="mailto:hello@victoriaflooringoutlet.ca" className="text-sm font-light text-white/80 hover:text-white transition-colors">
                 Contact
               </a>
+            </li>
+            <li>
+              <Link href="/trusted-installers" className="text-sm font-light text-white/80 hover:text-white transition-colors">
+                Installer Network
+              </Link>
             </li>
             <li>
               <Link href="/terms" className="text-sm font-light text-white/80 hover:text-white transition-colors">

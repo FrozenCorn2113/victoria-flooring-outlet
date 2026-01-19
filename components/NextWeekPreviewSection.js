@@ -23,7 +23,7 @@ export function NextWeekPreviewSection() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: 'next_week_preview' }),
       });
 
       const data = await response.json();
@@ -59,9 +59,6 @@ export function NextWeekPreviewSection() {
 
               {/* Lock overlay */}
               <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/30">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70">
-                  <span className="text-sm text-white">🔒</span>
-                </div>
                 <p className="px-6 text-center text-xs font-medium uppercase tracking-[0.22em] text-[#FBECD0]">
                   Preview for subscribers only
                 </p>
@@ -70,9 +67,10 @@ export function NextWeekPreviewSection() {
               {/* Blurred image */}
               <div className="relative h-64 md:h-72 lg:h-80">
                 <Image
-                  src="/images/next-week-preview.jpg"
+                  src="/images/optimized/next-week-preview.webp"
                   alt="Next week's flooring deal preview"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover filter blur-sm scale-105"
                 />
               </div>

@@ -1,10 +1,24 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { CartProvider } from '@/hooks/use-shopping-cart';
 import { Header, Footer } from '@/components/index';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { NetworkStatus } from '@/components/NetworkStatus';
+
+// Dynamic import for FloatingTyWidget to reduce initial bundle size
+const FloatingTyWidget = dynamic(
+  () => import('@/components/FloatingTyWidget').then(mod => mod.FloatingTyWidget),
+  { ssr: false }
+);
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+
+  // Show FloatingTyWidget only on homepage and product pages
+  const showTyWidget = router.pathname === '/' || router.pathname.startsWith('/products/');
   return (
     <>
       <Head>
@@ -15,6 +29,7 @@ function MyApp({ Component, pageProps }) {
           name="description"
           content="Victoria Flooring Outlet features exclusive weekly deals on premium flooring from Harbinger. Luxury vinyl plank, laminate, and accessories. Free shipping on orders over 500 sq ft."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="icon" href="/favicon.ico" />
 
         {/* Open Graph meta tags for social sharing */}
@@ -80,15 +95,22 @@ function MyApp({ Component, pageProps }) {
           }
         `}</style>
       </Head>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow">
-            <Component {...pageProps} />
-          </main>
-          <Footer />
-        </div>
-      </CartProvider>
+      <ErrorBoundary>
+        <CartProvider>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-vfo-charcoal focus:text-white focus:rounded-sm">
+            Skip to main content
+          </a>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main id="main-content" className="flex-grow">
+              <Component {...pageProps} />
+            </main>
+            <Footer />
+          </div>
+          {showTyWidget && <FloatingTyWidget />}
+          <NetworkStatus />
+        </CartProvider>
+      </ErrorBoundary>
       <Toaster />
     </>
   );

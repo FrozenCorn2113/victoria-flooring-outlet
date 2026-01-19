@@ -10,10 +10,13 @@ export default function SquareFootageCalculator({
   currency = 'CAD'
 }) {
   // Calculate boxes needed (always round up, no partial boxes)
-  const boxesNeeded = sqFt && sqFt > 0 ? Math.ceil(sqFt / coverageSqFtPerBox) : 0;
-  const totalCoverage = boxesNeeded * coverageSqFtPerBox;
+  // Add safety check for coverageSqFtPerBox to prevent division by zero
+  const boxesNeeded = sqFt && sqFt > 0 && coverageSqFtPerBox && coverageSqFtPerBox > 0 
+    ? Math.ceil(sqFt / coverageSqFtPerBox) 
+    : 0;
+  const totalCoverage = boxesNeeded * (coverageSqFtPerBox || 0);
   const totalPrice = pricePerSqFt * sqFt;
-  const pricePerBox = pricePerSqFt * coverageSqFtPerBox;
+  const pricePerBox = pricePerSqFt * (coverageSqFtPerBox || 0);
 
   // Calculate savings if compare price exists
   const hasSavings = compareAtPricePerSqFt && compareAtPricePerSqFt > pricePerSqFt;
@@ -24,7 +27,7 @@ export default function SquareFootageCalculator({
       {/* Square Footage Input */}
       <div>
         <label htmlFor="sqft-input" className="block text-sm font-medium text-vfo-charcoal mb-2">
-          How many do you need?
+          How much do you need?
         </label>
         <div className="flex items-center space-x-2">
           <input
@@ -42,7 +45,7 @@ export default function SquareFootageCalculator({
       </div>
 
       {/* Box Coverage Information */}
-      {sqFt > 0 && (
+      {sqFt > 0 && coverageSqFtPerBox && coverageSqFtPerBox > 0 && (
         <div className="bg-gray-50 rounded-md p-4 space-y-3">
           <div className="flex justify-between items-center text-sm">
             <span className="font-medium text-vfo-grey">Box Coverage</span>
@@ -78,14 +81,16 @@ export default function SquareFootageCalculator({
               {formatCurrency(pricePerSqFt * 100, currency)} / sq. ft.
             </span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-light text-vfo-grey">
-              Price per Box
-            </span>
-            <span className="text-sm font-light text-vfo-charcoal">
-              {formatCurrency(pricePerBox * 100, currency)} / box ({coverageSqFtPerBox} sq. ft.)
-            </span>
-          </div>
+          {coverageSqFtPerBox && coverageSqFtPerBox > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-light text-vfo-grey">
+                Price per Box
+              </span>
+              <span className="text-sm font-light text-vfo-charcoal">
+                {formatCurrency(pricePerBox * 100, currency)} / box ({coverageSqFtPerBox} sq. ft.)
+              </span>
+            </div>
+          )}
           <div className="flex justify-between items-center pt-2 border-t border-gray-200">
             <span className="text-base font-medium text-vfo-charcoal">
               Total Price

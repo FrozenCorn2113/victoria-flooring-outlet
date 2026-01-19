@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import Link from 'next/link';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
 import { Logo } from '@/components/index';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { MobileMenu } from './MobileMenu';
 
 const Header = () => {
   const { totalPrice, cartCount } = useShoppingCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 bg-white z-50 border-b border-vfo-border/30">
@@ -35,8 +38,8 @@ const Header = () => {
           </div>
 
           {/* Cart and Navigation - Right aligned */}
-          <div className="flex items-center justify-end gap-6 flex-1">
-            <nav className="hidden lg:flex items-center gap-6 text-sm font-light tracking-wide">
+          <div className="flex items-center justify-end gap-4 sm:gap-6 flex-1">
+            <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-6 text-sm font-light tracking-wide">
               <Link href="/accessories" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
                 Accessories
               </Link>
@@ -44,8 +47,20 @@ const Header = () => {
                 Installers
               </Link>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={mobileMenuOpen}
+              className="lg:hidden p-2 rounded-md hover:bg-vfo-sand/50 transition-colors text-vfo-charcoal"
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+
             <Link
               href="/cart"
+              aria-label={cartCount > 0 ? `View cart: ${cartCount} ${cartCount === 1 ? 'item' : 'items'}, ${formatCurrency(totalPrice)}` : 'View cart'}
               className="flex items-center gap-3 text-vfo-charcoal hover:text-vfo-accent transition-colors group"
             >
               <ShoppingCartIcon className="w-5 h-5" />
@@ -63,6 +78,9 @@ const Header = () => {
             </Link>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       </div>
     </header>
   );

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { formatCurrency } from '@/lib/utils';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { CountdownTimer } from './CountdownTimer';
-import { TalkToTy } from './TalkToTy';
 
 export function DealOfTheWeekHero({ weeklyDeal }) {
   if (!weeklyDeal) return null;
@@ -31,102 +30,100 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
   const defaultHighlights = [
     'Commercial-grade Harbinger flooring',
     '100% waterproof luxury vinyl plank',
-    'Scratch-resistant wear layer',
-    'Ships direct from Richmond, BC'
+    'Scratch-resistant wear layer'
   ];
 
   const highlights = weeklyDeal.highlights || defaultHighlights;
 
   return (
-    <section className="relative bg-vfo-sand">
-      {/* Full-width container */}
-      <div className="max-w-[1400px] mx-auto">
-        <div className="grid lg:grid-cols-2 gap-0">
+    <section className="bg-white border-b border-vfo-border/30">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-0">
+          {/* LEFT: Product info and pricing */}
+          <div className="px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-20 flex flex-col justify-center">
+            {/* Urgency label */}
+            <div className="mb-6">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-vfo-accent/10 text-vfo-accent border border-vfo-accent/20">
+                This Week Only
+              </span>
+            </div>
 
-          {/* LEFT: Editorial Copy Block */}
-          <div className="relative px-6 md:px-12 lg:px-16 py-12 md:py-16 lg:py-20 flex flex-col justify-center bg-vfo-sand">
-
-            {/* Urgent label */}
-            <p className="text-xl md:text-2xl lg:text-3xl font-bold uppercase text-vfo-accent mb-4 text-center">
-              This Week Only
-            </p>
-
-            {/* Countdown Timer - Prominent placement */}
-            <div className="mb-5 bg-white/60 backdrop-blur-sm border border-vfo-accent/20 rounded-sm px-4 py-3 inline-flex flex-col items-center">
-              <p className="text-xs uppercase tracking-wider text-vfo-accent mb-2.5 font-medium text-center">
-                Deal ends in:
-              </p>
+            {/* Countdown timer */}
+            <div className="mb-6">
+              <p className="text-sm text-vfo-grey mb-3 tracking-wide">Deal ends in:</p>
               <CountdownTimer targetDay={1} />
             </div>
 
-            {/* Large heading */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading tracking-tight text-vfo-charcoal leading-[1.1] mb-4">
+            {/* Product heading */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium text-vfo-charcoal mb-3 leading-tight">
               {weeklyDeal.name}
             </h1>
 
             {/* Subheading */}
-            <p className="text-sm md:text-base font-light text-vfo-grey leading-relaxed max-w-md mb-5">
-              {weeklyDeal.shortTagline || 'Commercial-grade luxury vinyl plank flooring. Exceptional durability meets timeless design.'}
-            </p>
+            {weeklyDeal.shortTagline && (
+              <p className="text-lg md:text-xl text-vfo-grey font-light mb-6">
+                {weeklyDeal.shortTagline}
+              </p>
+            )}
 
-            {/* Inline pricing - Tilebar style */}
-            <div className="mb-5">
-              <div className="flex items-baseline gap-3 mb-1">
-                <span className="text-3xl md:text-4xl font-medium text-vfo-charcoal">
-                  ${pricePerSqFt.toFixed(2)}
-                </span>
-                <span className="text-base font-light text-vfo-grey">/sq ft</span>
-                {compareAtPricePerSqFt > 0 && (
-                  <span className="text-sm text-vfo-lightgrey line-through ml-2">
-                    ${compareAtPricePerSqFt.toFixed(2)}
+            {/* Inline price display */}
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-4xl md:text-5xl font-semibold text-vfo-charcoal">
+                {formatCurrency(pricePerSqFt * 100)}
+              </span>
+              <span className="text-lg text-vfo-grey">/sq ft</span>
+              {compareAtPricePerSqFt > 0 && (
+                <>
+                  <span className="text-xl text-vfo-lightgrey line-through">
+                    {formatCurrency(compareAtPricePerSqFt * 100)}
                   </span>
-                )}
-              </div>
-              {savingsPercent > 0 && (
-                <p className="text-sm font-medium text-vfo-accent">
-                  Save {savingsPercent}% this week only
-                </p>
-              )}
-              {weeklyDeal.coverageSqFtPerBox && (
-                <p className="text-xs font-light text-vfo-grey mt-1">
-                  {weeklyDeal.coverageSqFtPerBox} sq ft per box
-                </p>
+                  {savingsPercent > 0 && (
+                    <span className="px-2 py-1 bg-red-50 text-red-700 text-sm font-medium rounded">
+                      Save {savingsPercent}%
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Feature bullets - refined */}
-            <ul className="space-y-2 mb-6">
-              {highlights.slice(0, 4).map((highlight, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm font-light text-vfo-grey">
-                  <CheckIcon className="w-4 h-4 text-vfo-accent flex-shrink-0 mt-0.5" />
-                  <span>{highlight}</span>
+            {/* Feature highlights */}
+            <ul className="space-y-3 mb-8">
+              {highlights.map((highlight, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <CheckIcon className="w-5 h-5 text-vfo-accent flex-shrink-0 mt-0.5" />
+                  <span className="text-base text-vfo-charcoal font-light">
+                    {highlight}
+                  </span>
                 </li>
               ))}
             </ul>
 
-            {/* Talk to Ty Helper Box */}
-            <TalkToTy />
-
-            {/* CTA - Clean, rectangular Tilebar style */}
-            <div className="text-center">
+            {/* CTA Button - Links to product page */}
+            <div className="space-y-4">
               <Link
                 href={`/products/${weeklyDeal.id}`}
-                className="inline-flex items-center justify-center px-8 py-3 bg-vfo-charcoal text-white text-sm font-medium tracking-wide uppercase hover:bg-vfo-slate transition-colors"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-vfo-charcoal text-white text-base font-medium tracking-wide uppercase hover:bg-vfo-slate transition-colors rounded-sm shadow-sm w-full md:w-auto"
               >
                 View This Week's Deal
               </Link>
-              <p className="text-xs text-vfo-lightgrey mt-2 font-light">
-                Limited weekly inventory · Ships within 3-5 days
+
+              <p className="text-sm text-vfo-grey">
+                Free shipping on orders over 500 sq ft
               </p>
             </div>
           </div>
 
           {/* RIGHT: Full-bleed lifestyle image */}
-          <div className="relative min-h-[300px] md:min-h-[400px] lg:min-h-[450px]">
+          <Link
+            href={`/products/${weeklyDeal.id}`}
+            className="relative min-h-[300px] md:min-h-[400px] lg:min-h-[450px] block"
+            aria-label={`View this week's deal: ${weeklyDeal.name}`}
+          >
             <Image
-              src={weeklyDeal.image || '/images/Untitled design (21).png'}
+              src={weeklyDeal.image || '/images/optimized/harbinger-coastal-oak-hero.webp'}
               alt={`${weeklyDeal.name} installed in a beautiful interior`}
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
               priority
             />
@@ -137,10 +134,9 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
                 Deal of the Week
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
-

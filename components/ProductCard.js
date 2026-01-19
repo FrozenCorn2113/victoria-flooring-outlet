@@ -45,7 +45,7 @@ const ProductCard = props => {
   }, [cartCount]);
 
   return (
-    <div className="bg-white border border-vfo-border rounded-sm p-6 group hover:shadow-md transition-shadow">
+    <div className="bg-white border border-vfo-border rounded-sm p-6 group hover:shadow-md transition-shadow h-full grid" style={{ gridTemplateRows: 'auto auto 1fr auto' }}>
       <Link href={`/products/${props.id}`}>
           {/* Product's image */}
           <div className="relative w-full h-48 mb-4 rounded-sm overflow-hidden bg-vfo-sand">
@@ -53,7 +53,7 @@ const ProductCard = props => {
               src={props.image || '/flooring/placeholder.jpg'}
               alt={props.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className={`${props.type === 'Accessory' ? 'object-contain p-2' : 'object-cover'} group-hover:scale-105 transition-transform duration-300`}
             />
           </div>
 
@@ -66,6 +66,9 @@ const ProductCard = props => {
             <Rating rate={props?.rating?.rate} count={props?.rating?.count} />
           </div>
       </Link>
+
+      {/* Spacer */}
+      <div />
 
       {/* Price + CTA */}
       <div className="mt-4 pt-4 border-t border-vfo-border">

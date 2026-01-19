@@ -23,6 +23,11 @@ cp .env.local.example .env.local
 
 Add your own values for all the environment variables.
 
+### Stripe setup (test mode)
+
+Follow the step-by-step guide in `docs/stripe-setup.md` to configure test keys,
+webhooks, and local redirects.
+
 ### 3. Start the application
 
 To run your site locally, use:

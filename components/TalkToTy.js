@@ -27,7 +27,7 @@ export function TalkToTy() {
       </div>
 
       <p className="mt-2 text-[11px] text-[#8A7F71]">
-        Local Victoria support · Available 9am–6pm most days.
+        Local Victoria support · Monday to Friday, 9-5.
       </p>
     </div>
   );

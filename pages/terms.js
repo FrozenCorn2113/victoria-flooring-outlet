@@ -9,6 +9,7 @@ export default function Terms() {
           name="description"
           content="Terms and conditions for purchasing flooring products from Victoria Flooring Outlet. Read our policies on shipping, returns, warranties, and more."
         />
+        <link rel="canonical" href="https://victoriaflooringoutlet.ca/terms" />
       </Head>
 
       <div className="min-h-screen bg-vfo-bg">

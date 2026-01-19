@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-harbinger",
+      "schedule": "5 0 * * 0"
+    },
+    {
+      "path": "/api/cron/send-weekly-sneak",
+      "schedule": "0 17 * * 0"
+    }
+  ]
+}

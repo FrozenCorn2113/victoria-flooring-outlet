@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-const Logo = ({ variant = 'default' }) => {
+const Logo = ({ variant = 'default', ariaLabel = 'Victoria Flooring Outlet Home' }) => {
   return (
-    <Link href="/" className="flex items-center justify-center group">
+    <Link href="/" aria-label={ariaLabel} className="flex items-center justify-center group">
       <div className="relative w-72 h-20 md:w-96 md:h-24 lg:w-[32rem] lg:h-28 xl:w-[36rem] xl:h-32 flex-shrink-0">
         <Image
           src="/images/Victoriaflooringoutlet_logo.png"

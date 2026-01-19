@@ -7,10 +7,11 @@ export default function InstallingLVPInVictoria() {
     <>
       <Head>
         <title>Installing LVP in Victoria BC | Victoria Flooring Outlet</title>
-        <meta 
-          name="description" 
-          content="Complete guide to installing luxury vinyl plank (LVP) flooring in Victoria, BC. Tips, tools, and trusted installers. Get professional installation or DIY with our guide." 
+        <meta
+          name="description"
+          content="Complete guide to installing luxury vinyl plank (LVP) flooring in Victoria, BC. Tips, tools, and trusted installers. Get professional installation or DIY with our guide."
         />
+        <link rel="canonical" href="https://victoriaflooringoutlet.ca/installing-lvp-in-victoria" />
       </Head>
 
       <SeoPageLayout title="Installing LVP in Victoria BC">
