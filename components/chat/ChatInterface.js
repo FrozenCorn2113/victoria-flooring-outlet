@@ -7,6 +7,9 @@ import { ChatMessage, TypingIndicator, WelcomeMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { useChat } from '../../hooks/use-chat';
 
+// Show lead form after this many messages (customer messages only)
+const LEAD_FORM_AFTER_MESSAGES = 2;
+
 export function ChatInterface({ onClose, onMinimize, context = {} }) {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -32,6 +35,18 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
 
   const [leadError, setLeadError] = useState(null);
   const [leadSaving, setLeadSaving] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [justCapturedLead, setJustCapturedLead] = useState(false);
+
+  // Count customer messages to determine when to show lead form
+  const customerMessageCount = messages.filter(m => m.sender === 'customer').length;
+
+  // Show lead form after a few exchanges (if not already captured)
+  useEffect(() => {
+    if (!leadCaptured && customerMessageCount >= LEAD_FORM_AFTER_MESSAGES) {
+      setShowLeadForm(true);
+    }
+  }, [customerMessageCount, leadCaptured]);
 
   const handleLeadChange = (field, value) => {
     setLeadInfo(prev => ({ ...prev, [field]: value }));
@@ -65,6 +80,8 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
       }
 
       setLeadCaptured(true);
+      setShowLeadForm(false);
+      setJustCapturedLead(true);
     } catch (err) {
       setLeadError(err.message || 'Unable to save contact info');
     } finally {
@@ -131,56 +148,8 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
           </div>
         )}
 
-        {/* Required lead capture */}
-        {initialized && !leadCaptured && (
-          <div className="bg-[#F7F5F1] border border-[#E8E4DD] rounded-xl p-4 mb-4">
-            <p className="text-sm font-medium text-[#1E1A15] mb-2">
-              Before we chat, please share your details
-            </p>
-            <p className="text-xs text-[#8A7F71] mb-3">
-              This lets Ty follow up with you directly.
-            </p>
-            <form onSubmit={handleLeadSubmit} className="space-y-2">
-              <input
-                type="text"
-                value={leadInfo.name}
-                onChange={(e) => handleLeadChange('name', e.target.value)}
-                placeholder="Full name"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
-                required
-              />
-              <input
-                type="email"
-                value={leadInfo.email}
-                onChange={(e) => handleLeadChange('email', e.target.value)}
-                placeholder="Email address"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
-                required
-              />
-              <input
-                type="tel"
-                value={leadInfo.phone}
-                onChange={(e) => handleLeadChange('phone', e.target.value)}
-                placeholder="Phone number"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15]"
-                required
-              />
-              {leadError && (
-                <p className="text-xs text-red-600">{leadError}</p>
-              )}
-              <button
-                type="submit"
-                disabled={leadSaving}
-                className="w-full bg-[#1E1A15] text-white py-2 rounded-lg text-sm font-semibold hover:bg-black disabled:opacity-50"
-              >
-                {leadSaving ? 'Saving...' : 'Continue to chat'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Welcome message (only if no messages yet) */}
-        {initialized && leadCaptured && messages.length === 0 && welcomeMessage && (
+        {/* Welcome message (shows immediately) */}
+        {initialized && messages.length === 0 && welcomeMessage && (
           <WelcomeMessage
             message={welcomeMessage}
             suggestedQuestions={suggestedQuestions}
@@ -196,6 +165,68 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
             isLastMessage={index === messages.length - 1}
           />
         ))}
+
+        {/* Lead capture form - shows after a few messages */}
+        {showLeadForm && !leadCaptured && (
+          <div className="bg-[#F7F5F1] border border-[#E8E4DD] rounded-xl p-4 mb-3 mx-1">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs font-medium text-[#8A7F71]">Ty&apos;s Assistant</span>
+            </div>
+            <p className="text-sm text-[#4A4237] mb-3">
+              I&apos;d love to help further! Share your contact info so Ty can follow up with personalized recommendations and quotes.
+            </p>
+            <form onSubmit={handleLeadSubmit} className="space-y-2">
+              <input
+                type="text"
+                value={leadInfo.name}
+                onChange={(e) => handleLeadChange('name', e.target.value)}
+                placeholder="Your name"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                required
+              />
+              <input
+                type="email"
+                value={leadInfo.email}
+                onChange={(e) => handleLeadChange('email', e.target.value)}
+                placeholder="Email address"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                required
+              />
+              <input
+                type="tel"
+                value={leadInfo.phone}
+                onChange={(e) => handleLeadChange('phone', e.target.value)}
+                placeholder="Phone number"
+                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                required
+              />
+              {leadError && (
+                <p className="text-xs text-red-600">{leadError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={leadSaving}
+                className="w-full bg-[#1E1A15] text-white py-2 rounded-lg text-sm font-semibold hover:bg-black disabled:opacity-50"
+              >
+                {leadSaving ? 'Saving...' : 'Send my info to Ty'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Thank you message after lead capture */}
+        {justCapturedLead && (
+          <div className="flex justify-start mb-3">
+            <div className="max-w-[85%] bg-[#F7F5F1] text-[#1E1A15] rounded-2xl rounded-bl-md border border-[#E8E4DD] px-4 py-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-medium text-[#8A7F71]">Ty&apos;s Assistant</span>
+              </div>
+              <p className="text-sm leading-relaxed text-[#4A4237]">
+                Thanks, {leadInfo.name?.split(' ')[0] || 'friend'}! Ty will reach out soon. Feel free to keep asking questions - I&apos;m happy to help!
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Typing indicator */}
         {isTyping && (
@@ -218,12 +249,10 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
       {/* Input */}
       <ChatInput
         onSend={sendMessage}
-        disabled={isLoading || !initialized || !leadCaptured}
+        disabled={isLoading || !initialized}
         placeholder={
           !initialized
             ? 'Connecting...'
-            : !leadCaptured
-            ? 'Please enter your details above to start...'
             : sessionStatus === 'human_handling'
             ? 'Message Ty...'
             : 'Ask about flooring, products, or services...'
