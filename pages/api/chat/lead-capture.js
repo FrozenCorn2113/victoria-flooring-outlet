@@ -55,11 +55,19 @@ export default async function handler(req, res) {
       await updateConversationLead(sessionId, {
         name: name.trim().slice(0, 255),
         email: email.trim().toLowerCase().slice(0, 255),
-        phone: phone.trim().slice(0, 25)
+        phone: phone.trim().slice(0, 20)
       });
     } catch (updateErr) {
-      console.error('Lead capture - update failed:', updateErr);
-      return res.status(500).json({ error: 'Failed to save lead info - update failed' });
+      console.error('Lead capture - update failed:', {
+        error: updateErr.message,
+        code: updateErr.code,
+        sessionId,
+        conversationId: conversation?.id
+      });
+      return res.status(500).json({
+        error: 'Failed to save lead info - update failed',
+        debug: { code: updateErr.code, message: updateErr.message, sessionId }
+      });
     }
 
     try {
