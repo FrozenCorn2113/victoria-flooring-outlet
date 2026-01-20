@@ -30,7 +30,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    let conversation = await getConversationBySessionId(sessionId);
+    let conversation;
+    try {
+      conversation = await getConversationBySessionId(sessionId);
+    } catch (lookupErr) {
+      console.error('Lead capture - DB lookup failed:', lookupErr);
+      // Continue to try creating a conversation
+    }
 
     // If conversation doesn't exist (degraded mode), create it now
     if (!conversation) {
@@ -45,11 +51,16 @@ export default async function handler(req, res) {
       }
     }
 
-    await updateConversationLead(sessionId, {
-      name: name.trim().slice(0, 255),
-      email: email.trim().toLowerCase().slice(0, 255),
-      phone: phone.trim().slice(0, 25)
-    });
+    try {
+      await updateConversationLead(sessionId, {
+        name: name.trim().slice(0, 255),
+        email: email.trim().toLowerCase().slice(0, 255),
+        phone: phone.trim().slice(0, 25)
+      });
+    } catch (updateErr) {
+      console.error('Lead capture - update failed:', updateErr);
+      return res.status(500).json({ error: 'Failed to save lead info - update failed' });
+    }
 
     try {
       await sendLeadCapturedEmail({
