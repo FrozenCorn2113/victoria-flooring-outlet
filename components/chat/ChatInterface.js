@@ -39,7 +39,10 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
 
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
-    if (!sessionId) return;
+    if (!sessionId) {
+      setLeadError('Chat is still connecting. Please wait a moment and try again.');
+      return;
+    }
 
     setLeadError(null);
     setLeadSaving(true);

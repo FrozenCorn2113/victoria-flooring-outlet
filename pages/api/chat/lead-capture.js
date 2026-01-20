@@ -1,43 +1,10 @@
 // pages/api/chat/lead-capture.js
 // Capture required lead info and notify via email
 
-import { getConversationBySessionId, updateConversationLead } from '../../../lib/chat/db-chat';
+import { getConversationBySessionId, updateConversationLead, createConversation } from '../../../lib/chat/db-chat';
+import { sendLeadCapturedEmail } from '../../../lib/chat/email-notifications';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-async function sendLeadEmail({ name, email, phone, sessionId }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return;
-
-  const toEmail = process.env.LEAD_NOTIFY_EMAIL || 'brettlc2113@gmail.com';
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'hello@victoriaflooringoutlet.ca';
-  const subject = `New chat lead: ${name}`;
-  const text = [
-    `Name: ${name}`,
-    `Email: ${email}`,
-    `Phone: ${phone}`,
-    `Session: ${sessionId}`
-  ].join('\n');
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [toEmail],
-      subject,
-      text
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Resend error (${response.status}): ${errorText}`);
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -63,9 +30,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const conversation = await getConversationBySessionId(sessionId);
+    let conversation = await getConversationBySessionId(sessionId);
+
+    // If conversation doesn't exist (degraded mode), create it now
     if (!conversation) {
-      return res.status(404).json({ error: 'Conversation not found' });
+      try {
+        conversation = await createConversation({
+          sessionId,
+          context: { createdFromLeadCapture: true }
+        });
+      } catch (createErr) {
+        console.error('Failed to create conversation for lead capture:', createErr);
+        return res.status(500).json({ error: 'Failed to save lead info - database unavailable' });
+      }
     }
 
     await updateConversationLead(sessionId, {
@@ -75,7 +52,7 @@ export default async function handler(req, res) {
     });
 
     try {
-      await sendLeadEmail({
+      await sendLeadCapturedEmail({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),

@@ -127,10 +127,13 @@ const Cart = () => {
             {Object.entries(cartDetails).map(([key, product]) => (
               <div
                 key={key}
-                className="flex justify-between space-x-4 hover:shadow-lg hover:border-opacity-50 border border-opacity-0 rounded-md p-4"
+                className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:space-x-4 hover:shadow-lg hover:border-opacity-50 border border-opacity-0 rounded-md p-4"
               >
                 {/* Image + Name */}
-                <Link href={`/products/${product.id}`} className="flex items-center space-x-4 group">
+                <Link
+                  href={`/products/${product.id}`}
+                  className="flex items-center gap-4 group min-w-0"
+                >
                   <div className="relative w-20 h-20 group-hover:scale-110 transition-transform">
                     <Image
                       src={product.image}
@@ -139,15 +142,15 @@ const Cart = () => {
                       className="object-contain"
                     />
                   </div>
-                  <p className="font-heading text-xl group-hover:underline">
+                  <p className="font-heading text-base sm:text-xl group-hover:underline break-words">
                     {product.name}
                   </p>
                 </Link>
 
                 {/* Price + Actions */}
-                <div className="flex items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
                   {/* Quantity */}
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => {
                         // Remove 10 sq ft increments for flooring, 1 for accessories
@@ -159,7 +162,7 @@ const Cart = () => {
                     >
                       <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
                     </button>
-                    <p className="font-medium text-xl">
+                    <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
                       {product.quantity}
                       {product.pricePerSqFt ? ' sq ft' : ''}
                     </p>
@@ -176,7 +179,7 @@ const Cart = () => {
                   </div>
 
                   {/* Price */}
-                  <div className="ml-16 text-right">
+                  <div className="sm:ml-16 sm:text-right">
                   {product.priceOnRequest ? (
                     <p className="font-medium text-xl text-vfo-charcoal">
                       {product.priceNote || 'Call for price'}
@@ -201,7 +204,7 @@ const Cart = () => {
                   {/* Remove item */}
                   <button
                     onClick={() => removeItem(product, product.quantity)}
-                    className="ml-4 hover:text-rose-500"
+                    className="sm:ml-4 hover:text-rose-500 self-start sm:self-auto"
                   >
                     <XCircleIcon className="w-6 h-6 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
                   </button>

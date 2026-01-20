@@ -20,6 +20,7 @@ import {
   analyzeSentiment
 } from '../../../lib/chat/openai';
 import { extractContactInfo, validateMessage } from '../../../lib/chat/chat-utils';
+import { sendNeedsAttentionEmail } from '../../../lib/chat/email-notifications';
 
 // Simple in-memory rate limiting
 const rateLimitMap = new Map();
@@ -193,6 +194,19 @@ export default async function handler(req, res) {
         : 'Long conversation';
 
       await notifyNeedsAttention(sessionId, reason);
+
+      // Send email notification for needs attention
+      try {
+        await sendNeedsAttentionEmail({
+          sessionId,
+          reason,
+          customerName: conversation.customer_name,
+          lastMessage: validation.message,
+          messageCount
+        });
+      } catch (emailError) {
+        console.error('Needs attention email error:', emailError);
+      }
     }
 
     return res.status(200).json({

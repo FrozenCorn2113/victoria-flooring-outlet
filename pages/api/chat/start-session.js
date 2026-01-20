@@ -5,6 +5,7 @@ import { createConversation, getConversationBySessionId, upsertChatSession } fro
 import { getChatChannelName, notifyNewConversation } from '../../../lib/chat/pusher';
 import { generateSessionId } from '../../../lib/chat/chat-utils';
 import { getSuggestedQuestions } from '../../../lib/chat/openai';
+import { sendNewConversationEmail } from '../../../lib/chat/email-notifications';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
     const { sessionId: existingSessionId, context = {} } = req.body;
 
     // Check if session already exists
+    let needsNewSessionId = false;
     if (existingSessionId) {
       try {
         const existingConversation = await getConversationBySessionId(existingSessionId);
@@ -30,13 +32,19 @@ export default async function handler(req, res) {
             suggestedQuestions: getSuggestedQuestions()
           });
         }
+
+        // If conversation exists but is resolved, we need a new session ID
+        // to avoid unique constraint violation
+        if (existingConversation && existingConversation.status === 'resolved') {
+          needsNewSessionId = true;
+        }
       } catch (dbError) {
         console.error('Chat DB lookup failed for existing session, continuing:', dbError);
       }
     }
 
-    // Create new session
-    const sessionId = existingSessionId || generateSessionId();
+    // Create new session - generate new ID if old conversation was resolved
+    const sessionId = needsNewSessionId ? generateSessionId() : (existingSessionId || generateSessionId());
     const pusherChannel = getChatChannelName(sessionId);
 
     let conversation = null;
@@ -59,8 +67,22 @@ export default async function handler(req, res) {
         pusherChannel
       });
 
-      // Notify admin of new conversation
+      // Notify admin of new conversation (Pusher real-time)
       await notifyNewConversation(conversation);
+
+      // Send email notification for new conversation
+      try {
+        await sendNewConversationEmail({
+          sessionId,
+          context: {
+            ...context,
+            userAgent: req.headers['user-agent']
+          },
+          createdAt: conversation.created_at
+        });
+      } catch (emailError) {
+        console.error('New conversation email error:', emailError);
+      }
     } catch (dbError) {
       console.error('Chat DB init failed, continuing in degraded mode:', dbError);
     }

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePusher } from './use-pusher';
 import {
   getOrCreateSessionId,
+  updateStoredSessionId,
   buildPageContext,
   checkRateLimit
 } from '../lib/chat/chat-utils';
@@ -53,6 +54,11 @@ export function useChat(initialContext = {}) {
         }
 
         const data = await response.json();
+
+        // Update localStorage if server assigned a different session ID
+        if (data.sessionId !== storedSessionId) {
+          updateStoredSessionId(data.sessionId);
+        }
 
         setSessionId(data.sessionId);
         setSessionStatus(data.status);
