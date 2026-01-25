@@ -11,21 +11,24 @@ async function addToMailerLite({ email, source }) {
   if (!apiKey) return null;
 
   const groupId = process.env.MAILERLITE_GROUP_ID;
-  const url = groupId
-    ? `https://api.mailerlite.com/api/v2/groups/${groupId}/subscribers`
-    : 'https://api.mailerlite.com/api/v2/subscribers';
+
+  // Use the new MailerLite API (connect.mailerlite.com) with Bearer auth
+  const url = 'https://connect.mailerlite.com/api/subscribers';
+
+  const body = {
+    email,
+    status: 'active',
+    ...(source ? { fields: { source } } : {}),
+    ...(groupId ? { groups: [groupId] } : {})
+  };
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-MailerLite-ApiKey': apiKey,
+      'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      email,
-      resubscribe: true,
-      ...(source ? { fields: { source } } : {})
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -63,6 +66,7 @@ export default async function handler(req, res) {
     });
   }
 
+  // Try to save to database, but don't block if MailerLite is available
   if (isNewsletterDbConfigured()) {
     try {
       await upsertSubscriber({
@@ -72,9 +76,13 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Newsletter database error:', error);
-      return res.status(500).json({
-        error: 'Unable to save subscription. Please try again later.'
-      });
+      // Only fail if MailerLite is not configured as a fallback
+      if (!process.env.MAILERLITE_API_KEY) {
+        return res.status(500).json({
+          error: 'Unable to save subscription. Please try again later.'
+        });
+      }
+      // Otherwise, log and continue to MailerLite
     }
   }
 

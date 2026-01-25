@@ -21,14 +21,18 @@ and `weekly_deals`.
 
 To sync subscribers to MailerLite, set:
 
-- `MAILERLITE_API_KEY`
+- `MAILERLITE_API_KEY` - Your API token from MailerLite (Integrations > API)
 - `MAILERLITE_GROUP_ID` (optional, to add subscribers directly to a group)
+
+**Note:** This integration uses the new MailerLite API (`connect.mailerlite.com/api`)
+with Bearer token authentication. Make sure you're using an API key from your
+MailerLite dashboard under Integrations > API.
 
 For automated weekly sends, also set:
 
 - `MAILERLITE_FROM_NAME` (default: Victoria Flooring Outlet)
-- `MAILERLITE_FROM_EMAIL` (default: hello@victoriaflooringoutlet.ca)
-- `SITE_URL` (default: https://victoriaflooringoutlet.ca)
+- `MAILERLITE_FROM_EMAIL` (default: <mailto:hello@victoriaflooringoutlet.ca>)
+- `SITE_URL` (default: <https://victoriaflooringoutlet.ca>)
 - `CRON_SECRET` (required to secure cron endpoints)
 
 If `MAILERLITE_API_KEY` is not set, subscriptions are stored only in the database.
@@ -44,3 +48,19 @@ scheduled entry from `weekly_deals` and sends it via MailerLite every Sunday at
 The subscription API accepts an optional `source` string. The homepage preview
 form uses `next_week_preview`, and the shared component defaults to
 `general_email_subscription`.
+
+## Frontend entry points
+
+- `components/NextWeekPreviewSection.js` (homepage section) posts to `/api/subscribe`
+  with `source: "next_week_preview"`.
+- `components/EmailSubscription.js` (shared component) posts to `/api/subscribe`
+  with `source: "general_email_subscription"` unless overridden.
+
+## MailerLite quick start
+
+1. Create a MailerLite account and generate an API key.
+2. (Optional) Create a group and copy its Group ID.
+3. Set the MailerLite env vars in your deployment:
+   - `MAILERLITE_API_KEY`
+   - `MAILERLITE_GROUP_ID` (optional)
+4. Deploy and test the form(s) on the homepage.
