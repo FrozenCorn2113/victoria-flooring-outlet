@@ -206,31 +206,48 @@ const Cart = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
                   {/* Quantity */}
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        // Remove 10 sq ft increments for flooring, 1 for accessories
-                        const removeAmount = product.pricePerSqFt ? 10 : 1;
-                        removeItem(product, removeAmount);
-                      }}
-                      disabled={product?.quantity <= (product.pricePerSqFt ? 10 : 1)}
-                      className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1"
-                    >
-                      <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
-                    </button>
-                    <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
-                      {product.quantity}
-                      {product.pricePerSqFt ? ' sq ft' : ''}
-                    </p>
-                    <button
-                      onClick={() => {
-                        // Add 10 sq ft increments for flooring, 1 for accessories
-                        const addAmount = product.pricePerSqFt ? 10 : 1;
-                        addItem(product, addAmount);
-                      }}
-                      className="hover:bg-green-100 hover:text-green-500 rounded-md p-1"
-                    >
-                      <PlusSmIcon className="w-6 h-6 flex-shrink-0 " />
-                    </button>
+                    {(() => {
+                      // For flooring products, calculate boxes
+                      const isFlooring = product.pricePerSqFt && product.coverageSqFtPerBox;
+                      const boxSize = product.coverageSqFtPerBox || 1;
+                      const boxes = isFlooring ? Math.ceil(product.quantity / boxSize) : product.quantity;
+                      const minBoxes = 1;
+
+                      return (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (isFlooring) {
+                                // Remove one box worth of sq ft
+                                removeItem(product, boxSize);
+                              } else {
+                                removeItem(product, 1);
+                              }
+                            }}
+                            disabled={boxes <= minBoxes}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1"
+                          >
+                            <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
+                          </button>
+                          <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
+                            {isFlooring ? `${boxes} ${boxes === 1 ? 'box' : 'boxes'}` : product.quantity}
+                          </p>
+                          <button
+                            onClick={() => {
+                              if (isFlooring) {
+                                // Add one box worth of sq ft
+                                addItem(product, boxSize);
+                              } else {
+                                addItem(product, 1);
+                              }
+                            }}
+                            className="hover:bg-green-100 hover:text-green-500 rounded-md p-1"
+                          >
+                            <PlusSmIcon className="w-6 h-6 flex-shrink-0 " />
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Price */}
@@ -242,7 +259,7 @@ const Cart = () => {
                   ) : product.pricePerSqFt ? (
                       <>
                         <p className="font-light text-sm text-gray-600">
-                          ${product.pricePerSqFt.toFixed(2)}/sq ft
+                          {product.quantity} sq ft @ ${product.pricePerSqFt.toFixed(2)}/sq ft
                         </p>
                         <p className="font-medium text-xl">
                           {formatCurrency(product.itemTotalPrice || (product.pricePerSqFt * product.quantity * 100))}
