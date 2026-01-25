@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { getUpsellProducts, calculateAccessoryQuantity } from '@/lib/products';
 import { getVendorProductById } from '@/lib/harbinger/sync';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
+import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 import marketingData from '@/data/vendor_product_marketing.json';
 
 import products from '../../products';
@@ -1006,41 +1007,25 @@ const Product = props => {
             </>
           )}
 
+          {/* Project Accessories Calculator - for Harbinger flooring products */}
           {showHarbingerNosingInfo && (
-            <section className="mb-8 p-6 bg-white rounded-lg border border-vfo-border">
-              <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
-                Nosings & Transitions
-              </h2>
-              <div className="space-y-3 text-[15px] font-light text-vfo-grey leading-relaxed">
-                <p>
-                  Stair nosing is the finished edge that protects the front of stairs or landings and gives your install a safe,
-                  clean edge. Transitions (like reducers and T-mouldings) are used where your flooring meets another surface or
-                  changes height.
-                </p>
-                <p>
-                  Harbinger offers colour-matched trims that complete the look. These trims are only available with the purchase
-                  of Harbinger products.
-                </p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Reducer — 2400mm x 45mm x 7.5mm (94.5” x 1.75” x 0.3”)</li>
-                  <li>T-Moulding — 2400mm x 45mm x 2.5mm (94.5” x 1.75” x 0.125”)</li>
-                  <li>Flush or Overlap Nosing — 2400mm x 50mm x 3mm (94.5” x 1.9” x 0.125”)</li>
-                  <li>SAC Square Nosing — 2400mm x 82mm x 35mm (94.5” x 3.25” x 1.4”)</li>
-                </ul>
-                <p>
-                  T-Mouldings and Reducers include a deep or shallow track to match the product thickness.
-                </p>
-              </div>
+            <section className="mt-12">
+              <ProjectAccessoriesCalculator sqFt={sqFt} flooringProduct={props} />
             </section>
           )}
 
-
-          {/* Upsell Products Section */}
-          {upsellProducts.length > 0 && (
+          {/* Upsell Products Section - only for non-Harbinger products */}
+          {!showHarbingerNosingInfo && upsellProducts.length > 0 && (
             <section className="mt-12 pt-12 border-t border-vfo-border">
-              <h2 className="text-2xl md:text-3xl font-heading tracking-wide text-vfo-charcoal mb-6">
+              <h2 className="text-2xl md:text-3xl font-heading tracking-wide text-vfo-charcoal mb-2">
                 You'll Also Need
               </h2>
+              <p className="text-vfo-grey mb-6">
+                Essential accessories for your flooring installation. Not sure what you need?{' '}
+                <Link href="/accessories" className="text-vfo-accent hover:underline">
+                  View our selection guide
+                </Link>
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {upsellProducts.map((upsell) => {
                   // Calculate recommended quantity if this is an accessory with coverage data
@@ -1048,13 +1033,17 @@ const Product = props => {
                     ? calculateAccessoryQuantity(sqFt, upsell)
                     : 1;
 
+                  // Get contextual help text
+                  const helpText = upsell.useWhen || upsell.chooseThisIf || null;
+                  const helpLabel = upsell.useWhen ? 'Use when:' : (upsell.chooseThisIf ? 'Choose this if:' : null);
+
                   return (
                     <div
                       key={upsell.id}
                       className="bg-white border border-vfo-border rounded-lg p-6 hover:shadow-md transition-shadow"
                     >
                       <Link href={`/products/${upsell.id}`}>
-                        <div className="relative w-full h-48 mb-4 bg-vfo-sand rounded-sm overflow-hidden">
+                        <div className="relative w-full h-40 mb-4 bg-vfo-sand rounded-sm overflow-hidden">
                           <Image
                             src={upsell.image || '/accessories/placeholder.jpg'}
                             alt={upsell.name}
@@ -1065,14 +1054,24 @@ const Product = props => {
                       </Link>
 
                       <Link href={`/products/${upsell.id}`}>
-                        <h3 className="font-heading text-lg text-vfo-charcoal mb-2 hover:text-vfo-accent transition-colors">{upsell.name}</h3>
+                        <h3 className="font-heading text-base text-vfo-charcoal mb-2 hover:text-vfo-accent transition-colors leading-tight">{upsell.name}</h3>
                       </Link>
 
-                      {upsell.description && (
-                        <p className="text-sm font-light text-vfo-grey mb-3 line-clamp-2 leading-relaxed">
-                          {upsell.description}
+                      {/* Contextual Help - Use When / Choose This If */}
+                      {helpText && (
+                        <div className="mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
+                          <p className="text-xs font-medium text-amber-900 mb-0.5">{helpLabel}</p>
+                          <p className="text-xs text-amber-800 leading-relaxed">{helpText}</p>
+                        </div>
+                      )}
+
+                      {/* Show description only if no help text */}
+                      {!helpText && upsell.shortTagline && (
+                        <p className="text-sm font-light text-vfo-grey mb-3 leading-relaxed">
+                          {upsell.shortTagline}
                         </p>
                       )}
+
                       {upsell.appearanceNote && (
                         <p className="text-xs text-vfo-bluegrey mb-3">
                           {upsell.appearanceNote}
