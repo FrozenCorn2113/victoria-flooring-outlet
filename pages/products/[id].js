@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { getUpsellProducts, calculateAccessoryQuantity } from '@/lib/products';
 import { getVendorProductById } from '@/lib/harbinger/sync';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
+import marketingData from '@/data/vendor_product_marketing.json';
 
 import products from '../../products';
 
@@ -244,6 +245,29 @@ const buildFeatureList = (features) => {
   return [];
 };
 
+const looksLikeSpecLine = (value, sku) => {
+  if (!value) return false;
+  const text = String(value).toLowerCase();
+  if (sku && text.includes(String(sku).toLowerCase())) return true;
+  if (text.includes('x') && (text.includes('mm') || text.includes('wl'))) return true;
+  return false;
+};
+
+const SERIES_FALLBACK = {
+  Contract:
+    'Commercial-grade glue-down vinyl built for high-traffic installs with a durable core and Harbinger 4S coating.',
+  Craftsman:
+    'Balanced design and durability in a glue-down format with realistic textures and Harbinger 4S protection.',
+  Essentials:
+    'Versatile neutrals with straightforward glue-down performance and 4S coating for everyday durability.',
+  'Signature Acoustic Click':
+    'Quiet comfort with a floating install and cork backing, finished with realistic embossing.',
+  'Harbinger Acoustic Click':
+    'Composite core and cork backing for quieter rooms, with durable 4S protection.',
+  'The Quiet Zone':
+    'IXPE acoustic layer paired with glue-down performance and durable 4S protection.',
+};
+
 const Product = props => {
   const router = useRouter();
   const { cartCount, addItem } = useShoppingCart();
@@ -255,6 +279,12 @@ const Product = props => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const upsellProducts = getUpsellProducts(props.id);
+  const showDescription = Boolean(props.description);
+  const fallbackDescription = SERIES_FALLBACK[props.collection] || SERIES_FALLBACK[props.series];
+  const marketingDescription = marketingData?.[props.slug]?.description || marketingData?.[props.id]?.description || null;
+  const safeDescription = looksLikeSpecLine(props.description, props.sku) ? null : props.description;
+  const displayDescription = marketingDescription || safeDescription || fallbackDescription || null;
+  const metaDescription = displayDescription || 'Beautiful floors, amazing prices.';
 
   const productImages = useMemo(() => {
     if (props.images && props.images.length > 0) {
@@ -549,12 +579,12 @@ const Product = props => {
     <>
       <Head>
         <title>{props.name} | Victoria Flooring Outlet</title>
-        <meta name="description" content={`${props.description || props.shortTagline} Free shipping on orders over 500 sq ft across Vancouver Island including Victoria, Nanaimo, and Comox Valley.`} />
+        <meta name="description" content={`${metaDescription} Free shipping on orders over 500 sq ft across Vancouver Island including Victoria, Nanaimo, and Comox Valley.`} />
         <link rel="canonical" href={`https://victoriaflooringoutlet.ca/products/${props.id}`} />
 
         {/* Product-specific Open Graph overrides */}
         <meta property="og:title" content={`${props.name} | Victoria Flooring Outlet`} />
-        <meta property="og:description" content={`${props.description || props.shortTagline} ${props.warranty}. Free shipping on orders over 500 sq ft across Vancouver Island.`} />
+        <meta property="og:description" content={`${metaDescription} ${props.warranty || ''} Free shipping on orders over 500 sq ft across Vancouver Island.`} />
         <meta property="og:image" content={`https://victoriaflooringoutlet.ca${props.image}`} />
         <meta property="og:url" content={`https://victoriaflooringoutlet.ca/products/${props.id}`} />
         <meta property="og:type" content="product" />
@@ -570,7 +600,7 @@ const Product = props => {
               '@type': 'Product',
               name: props.name,
               image: `https://victoriaflooringoutlet.ca${props.image}`,
-              description: props.description,
+              description: metaDescription,
               sku: props.sku || props.id,
               identifier: props.sku || props.id,
               brand: {
@@ -774,16 +804,16 @@ const Product = props => {
                 {props.brand && !props.name?.toLowerCase().includes(props.brand.toLowerCase()) && (
                   <p className="text-[15px] font-light text-vfo-grey mb-2">Brand: {props.brand}</p>
                 )}
+                {displayDescription && (
+                  <p className="text-[15px] font-light text-vfo-grey leading-relaxed">
+                    {displayDescription}
+                  </p>
+                )}
               </div>
 
-              {(props.description || overviewBullets.length > 0) && (
+              {(overviewBullets.length > 0) && (
                 <div className="space-y-3">
                   <h2 className="text-lg font-heading tracking-wide text-vfo-charcoal">Overview</h2>
-                  {props.description && (
-                    <p className="text-[15px] font-light text-vfo-grey leading-relaxed">
-                      {props.description}
-                    </p>
-                  )}
                   {props.appearanceNote && (
                     <p className="text-sm text-vfo-bluegrey">
                       {props.appearanceNote}
@@ -1004,33 +1034,6 @@ const Product = props => {
             </section>
           )}
 
-          {/* Why This Week's Deal Section */}
-          {props.isWeeklyDeal && (
-            <section className="mb-12 p-6 bg-vfo-sand rounded-lg border border-vfo-border">
-              <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-3">
-                Why This Week's Deal is Special
-              </h2>
-              <p className="text-[15px] font-light text-vfo-grey leading-relaxed mb-3">
-                This week only, we're offering {props.name} at a special discounted price. Built in Harbinger's Contract
-                Series, it pairs commercial-grade performance with refined, realistic visuals that elevate busy spaces.
-                Limited stock available this week.
-              </p>
-              <ul className="space-y-2 text-[15px] font-light text-vfo-grey">
-                <li className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>Direct-to-door delivery for a smooth, hassle-free arrival</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-vfo-grey flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>High-end look with commercial-grade durability</span>
-                </li>
-              </ul>
-            </section>
-          )}
 
           {/* Upsell Products Section */}
           {upsellProducts.length > 0 && (
