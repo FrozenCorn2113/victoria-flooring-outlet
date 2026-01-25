@@ -7,8 +7,7 @@ import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
 import { calculateShipping } from '@/lib/shipping';
-import { getSmartRecommendations } from '@/lib/products';
-import AccessoryRecommendationCard from '@/components/AccessoryRecommendationCard';
+import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 import {
   XCircleIcon,
   XMarkIcon as XIcon,
@@ -17,14 +16,33 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Cart = () => {
-  const { cartDetails, totalPrice, cartCount, addItem, removeItem, clearCart } =
+  const { cartDetails, totalPrice, cartCount, addItem, removeItem, clearCart, expiredItems, clearExpiredNotification } =
     useShoppingCart();
   const [redirecting, setRedirecting] = useState(false);
   const [postalCode, setPostalCode] = useState('');
   const [shippingResult, setShippingResult] = useState(null);
 
-  // Get smart recommendations based on cart contents
-  const smartRecommendations = getSmartRecommendations(cartDetails);
+  const adhesiveIds = [
+    'uzin_ke_2000_s',
+    'uzin_ke_66',
+    'uzin_kr_430',
+  ];
+  const transitionIds = [
+    'harbinger-t-moulding',
+    'harbinger-reducer',
+    'harbinger-flush-overlap-nosing',
+  ];
+
+  const totalFlooringSqFt = Object.values(cartDetails || {})
+    .filter(item => item.pricePerSqFt)
+    .reduce((sum, item) => sum + item.quantity, 0);
+
+  const hasAdhesiveInCart = Object.values(cartDetails || {})
+    .some(item => adhesiveIds.includes(item.id));
+  const hasTransitionInCart = Object.values(cartDetails || {})
+    .some(item => transitionIds.includes(item.id));
+
+  const shouldShowAccessoriesCalculator = totalFlooringSqFt > 0 && (!hasAdhesiveInCart || !hasTransitionInCart);
 
   // Calculate shipping when postal code or cart changes
   useEffect(() => {
@@ -69,13 +87,21 @@ const Cart = () => {
               quantity: product.quantity, // quantity is square footage
             };
           }
-          // Legacy: use price ID for products without pricePerSqFt
+          // For accessories and other products without pricePerSqFt, use price_data
           return {
-            price: product.id,
+            price_data: {
+              currency: 'cad',
+              product_data: {
+                name: product.name,
+              },
+              unit_amount: product.price, // price is already in cents
+            },
             quantity: product.quantity,
           };
         }),
         shipping: shippingResult?.shipping || 0,
+        postalCode: postalCode || '',
+        shippingZone: shippingResult?.zone || '',
       });
 
       // Redirect to checkout
@@ -95,11 +121,40 @@ const Cart = () => {
         <title>Shopping Cart | Victoria Flooring Outlet</title>
       </Head>
       <div className="container xl:max-w-screen-xl mx-auto py-12 px-6">
+        {/* Expired items notification */}
+        {expiredItems && expiredItems.length > 0 && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-medium text-amber-800">Some items were removed from your cart</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  The following weekly deals have expired and were removed:
+                </p>
+                <ul className="mt-2 text-sm text-amber-700">
+                  {expiredItems.map((item) => (
+                    <li key={item.id}>• {item.name}</li>
+                  ))}
+                </ul>
+                <p className="text-sm text-amber-700 mt-2">
+                  Check out our <a href="/" className="underline font-medium">current weekly deal</a>!
+                </p>
+              </div>
+              <button
+                onClick={clearExpiredNotification}
+                className="text-amber-600 hover:text-amber-800"
+                aria-label="Dismiss notification"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {cartCount > 0 ? (
           <>
             <h2 className="text-4xl font-heading tracking-wide">Your shopping cart</h2>
             <p className="mt-1 text-xl font-light">
-              {cartCount} items{' '}
+              {Object.keys(cartDetails).length} {Object.keys(cartDetails).length === 1 ? 'item' : 'items'}{' '}
               <button
                 onClick={clearCart}
                 className="opacity-50 hover:opacity-100 text-base capitalize"
@@ -212,27 +267,10 @@ const Cart = () => {
               </div>
             ))}
 
-            {/* Recommended Accessories */}
-            {smartRecommendations.recommendations.length > 0 && (
+            {/* Project Accessories Calculator */}
+            {shouldShowAccessoriesCalculator && (
               <div className="mt-12 mb-8 pb-8 border-b border-gray-200">
-                <div className="mb-6">
-                  <h3 className="text-2xl font-heading tracking-wide mb-2">
-                    Complete Your Project
-                  </h3>
-                  <p className="text-base text-gray-600">
-                    Based on your {smartRecommendations.totalFlooringSqFt} sq ft flooring order
-                  </p>
-                </div>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  {smartRecommendations.recommendations.map(accessory => (
-                    <AccessoryRecommendationCard
-                      key={accessory.id}
-                      accessory={accessory}
-                      flooringSqFt={smartRecommendations.totalFlooringSqFt}
-                    />
-                  ))}
-                </div>
+                <ProjectAccessoriesCalculator sqFt={totalFlooringSqFt} />
               </div>
             )}
 

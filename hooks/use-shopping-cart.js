@@ -1,4 +1,4 @@
-import React, { useContext, useReducer, useMemo } from 'react';
+import React, { useContext, useReducer, useMemo, useEffect, useState, useCallback } from 'react';
 import useLocalStorageReducer from './use-local-storage-reducer';
 
 // Reducers
@@ -122,16 +122,75 @@ export const CartProvider = ({ currency = 'USD', children = null }) => {
     cartReducer,
     initialCartValues
   );
+  const [hasValidated, setHasValidated] = useState(false);
+  const [expiredItems, setExpiredItems] = useState([]);
+
+  // Validate cart items on mount - check for expired weekly deals
+  useEffect(() => {
+    const validateCart = async () => {
+      if (hasValidated) return;
+      if (!cart.cartDetails || Object.keys(cart.cartDetails).length === 0) {
+        setHasValidated(true);
+        return;
+      }
+
+      // Check if any items have weeklyDealId
+      const hasWeeklyDeals = Object.values(cart.cartDetails).some(
+        (item) => item.weeklyDealId
+      );
+      if (!hasWeeklyDeals) {
+        setHasValidated(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/cart/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cartDetails: cart.cartDetails }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.expiredItems && data.expiredItems.length > 0) {
+            // Remove expired items from cart
+            setExpiredItems(data.expiredItems);
+            data.expiredItems.forEach((expiredItem) => {
+              const item = cart.cartDetails[expiredItem.id];
+              if (item) {
+                dispatch({
+                  type: 'REMOVE_ITEM',
+                  product: item,
+                  quantity: item.quantity,
+                });
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to validate cart:', error);
+      }
+      setHasValidated(true);
+    };
+
+    validateCart();
+  }, [cart.cartDetails, hasValidated, dispatch]);
+
+  const clearExpiredNotification = useCallback(() => {
+    setExpiredItems([]);
+  }, []);
 
   const contextValue = useMemo(
     () => [
       {
         ...cart,
         currency,
+        expiredItems,
+        clearExpiredNotification,
       },
       dispatch,
     ],
-    [cart, currency]
+    [cart, currency, expiredItems, clearExpiredNotification]
   );
 
   return (
@@ -156,6 +215,8 @@ export const useShoppingCart = () => {
     addItem,
     removeItem,
     clearCart,
+    expiredItems: cart.expiredItems || [],
+    clearExpiredNotification: cart.clearExpiredNotification || (() => {}),
   };
 
   return shoppingCart;
