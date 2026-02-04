@@ -52,16 +52,16 @@ export default function Contact() {
                   </a>
 
                   <a
-                    href="tel:+12508869499"
+                    href="sms:+12508867775"
                     className="flex items-start gap-4 p-4 bg-white rounded-xl border border-vfo-muted/20 hover:border-vfo-accent hover:shadow-md transition-all group"
                   >
                     <div className="p-3 bg-vfo-accent/10 rounded-lg group-hover:bg-vfo-accent/20 transition-colors">
                       <PhoneIcon className="w-6 h-6 text-vfo-accent" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-vfo-muted mb-1 uppercase tracking-wide">Phone</p>
-                      <p className="text-vfo-slate font-medium">(250) 886-9499</p>
-                      <p className="text-sm text-vfo-bluegrey mt-1">Call or text</p>
+                      <p className="text-xs font-semibold text-vfo-muted mb-1 uppercase tracking-wide">Text Ty</p>
+                      <p className="text-vfo-slate font-medium">(250) 886-7775</p>
+                      <p className="text-sm text-vfo-bluegrey mt-1">Usually responds within an hour</p>
                     </div>
                   </a>
 

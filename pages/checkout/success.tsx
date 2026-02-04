@@ -229,10 +229,10 @@ export default function CheckoutSuccess() {
             <p className="text-vfo-grey mb-4">Questions about your order?</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href="tel:+12508869499"
+                href="sms:+12508867775"
                 className="inline-flex items-center justify-center px-6 py-3 bg-vfo-accent text-white font-medium rounded-lg hover:bg-teal-600 transition-colors"
               >
-                Call: (250) 886-9499
+                Text Ty: (250) 886-7775
               </a>
               <Link
                 href="/"
