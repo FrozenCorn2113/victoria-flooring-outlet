@@ -17,7 +17,7 @@ export default function CheckoutCancel() {
 
         {/* Message */}
         <p className="text-vfo-grey mb-6">
-          No charges were made to your card. You can return to the weekly deal page to try again or browse our other products.
+          No charges were made to your card. You can return to the weekly deal page to try again or browse our accessories.
         </p>
 
         {/* CTA Buttons */}
@@ -30,10 +30,10 @@ export default function CheckoutCancel() {
           </Link>
 
           <Link
-            href="/products"
+            href="/accessories"
             className="block px-8 py-3 border border-vfo-border text-vfo-charcoal font-medium hover:bg-vfo-sand transition-colors"
           >
-            Browse All Products
+            Browse Accessories
           </Link>
         </div>
 

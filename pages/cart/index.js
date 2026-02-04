@@ -21,6 +21,7 @@ const Cart = () => {
   const [redirecting, setRedirecting] = useState(false);
   const [postalCode, setPostalCode] = useState('');
   const [shippingResult, setShippingResult] = useState(null);
+  const [shippingNotice, setShippingNotice] = useState(false);
 
   const adhesiveIds = [
     'uzin_ke_2000_s',
@@ -31,18 +32,29 @@ const Cart = () => {
     'harbinger-t-moulding',
     'harbinger-reducer',
     'harbinger-flush-overlap-nosing',
+    'harbinger-sac-square-nosing',
   ];
 
   const totalFlooringSqFt = Object.values(cartDetails || {})
     .filter(item => item.pricePerSqFt)
     .reduce((sum, item) => sum + item.quantity, 0);
 
+  // Calculate actual item count (boxes for flooring, units for accessories)
+  const cartItemCount = Object.values(cartDetails || {}).reduce((count, item) => {
+    if (item.pricePerSqFt && item.coverageSqFtPerBox) {
+      // Flooring: count boxes
+      return count + Math.ceil(item.quantity / item.coverageSqFtPerBox);
+    }
+    // Accessories: count units
+    return count + item.quantity;
+  }, 0);
+
   const hasAdhesiveInCart = Object.values(cartDetails || {})
     .some(item => adhesiveIds.includes(item.id));
   const hasTransitionInCart = Object.values(cartDetails || {})
     .some(item => transitionIds.includes(item.id));
 
-  const shouldShowAccessoriesCalculator = totalFlooringSqFt > 0 && (!hasAdhesiveInCart || !hasTransitionInCart);
+  const shouldShowAccessoriesCalculator = totalFlooringSqFt > 0;
 
   // Calculate shipping when postal code or cart changes
   useEffect(() => {
@@ -63,10 +75,15 @@ const Cart = () => {
         formatted = `${value.slice(0, 3)} ${value.slice(3)}`;
       }
       setPostalCode(formatted.trim());
+      setShippingNotice(false);
     }
   };
 
   const redirectToCheckout = async () => {
+    if (!shippingResult?.valid) {
+      setShippingNotice(true);
+      return;
+    }
     setRedirecting(true);
     try {
       // Create Stripe checkout
@@ -154,7 +171,7 @@ const Cart = () => {
           <>
             <h2 className="text-4xl font-heading tracking-wide">Your shopping cart</h2>
             <p className="mt-1 text-xl font-light">
-              {Object.keys(cartDetails).length} {Object.keys(cartDetails).length === 1 ? 'item' : 'items'}{' '}
+              {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}{' '}
               <button
                 onClick={clearCart}
                 className="opacity-50 hover:opacity-100 text-base capitalize"
@@ -203,9 +220,9 @@ const Cart = () => {
                 </Link>
 
                 {/* Price + Actions */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[8rem_1fr_auto] sm:items-center sm:gap-6 sm:w-[22rem] sm:justify-end">
                   {/* Quantity */}
-                  <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-[2.5rem_3rem_2.5rem] items-center text-center justify-self-start">
                     {(() => {
                       // For flooring products, calculate boxes
                       const isFlooring = product.pricePerSqFt && product.coverageSqFtPerBox;
@@ -225,12 +242,12 @@ const Cart = () => {
                               }
                             }}
                             disabled={boxes <= minBoxes}
-                            className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1"
+                            className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1 mx-auto"
                           >
                             <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
                           </button>
                           <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
-                            {isFlooring ? `${boxes} ${boxes === 1 ? 'box' : 'boxes'}` : product.quantity}
+                            {isFlooring ? boxes : product.quantity}
                           </p>
                           <button
                             onClick={() => {
@@ -241,7 +258,7 @@ const Cart = () => {
                                 addItem(product, 1);
                               }
                             }}
-                            className="hover:bg-green-100 hover:text-green-500 rounded-md p-1"
+                            className="hover:bg-green-100 hover:text-green-500 rounded-md p-1 mx-auto"
                           >
                             <PlusSmIcon className="w-6 h-6 flex-shrink-0 " />
                           </button>
@@ -251,7 +268,7 @@ const Cart = () => {
                   </div>
 
                   {/* Price */}
-                  <div className="sm:ml-16 sm:text-right">
+                  <div className="sm:text-right">
                   {product.priceOnRequest ? (
                     <p className="font-medium text-xl text-vfo-charcoal">
                       {product.priceNote || 'Call for price'}
@@ -276,7 +293,7 @@ const Cart = () => {
                   {/* Remove item */}
                   <button
                     onClick={() => removeItem(product, product.quantity)}
-                    className="sm:ml-4 hover:text-rose-500 self-start sm:self-auto"
+                    className="hover:text-rose-500 self-start sm:self-auto"
                   >
                     <XCircleIcon className="w-6 h-6 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
                   </button>
@@ -364,13 +381,22 @@ const Cart = () => {
 
               <button
                 onClick={redirectToCheckout}
-                disabled={redirecting || (postalCode && !shippingResult?.valid)}
+                disabled={redirecting || !shippingResult?.valid}
                 className="border rounded py-2 px-6 bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 focus:ring-4 focus:ring-opacity-50 focus:ring-emerald-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 max-w-max mt-4"
               >
                 {redirecting ? 'Redirecting...' : 'Go to Checkout'}
               </button>
-              {postalCode && !shippingResult?.valid && (
-                <p className="mt-2 text-sm text-red-600">Please enter a valid Canadian postal code</p>
+              {!shippingResult?.valid && (postalCode || shippingNotice) && (
+                <p className="mt-2 text-sm text-red-600">
+                  {postalCode
+                    ? 'Please enter a valid Canadian postal code'
+                    : 'Please calculate shipping before proceeding to checkout'}
+                </p>
+              )}
+              {!shippingResult?.valid && !postalCode && !shippingNotice && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Please calculate shipping to enable checkout.
+                </p>
               )}
             </div>
           </div>

@@ -32,7 +32,7 @@ export default function CheckoutSuccess() {
 
         {/* Message */}
         <p className="text-vfo-grey mb-6">
-          Thank you for your order. You'll receive an email receipt from Stripe shortly with your order details and payment confirmation.
+          Thank you for your order. You'll receive an email confirmation shortly with your order details and shipping information.
         </p>
 
         {session_id && (
