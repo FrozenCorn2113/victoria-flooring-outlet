@@ -56,6 +56,9 @@ const Header = () => {
               <Link href="/trusted-installers" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
                 Installers
               </Link>
+              <Link href="/contact" className="text-vfo-grey hover:text-vfo-charcoal transition-colors">
+                Contact
+              </Link>
             </nav>
 
             {/* Mobile Menu Button */}

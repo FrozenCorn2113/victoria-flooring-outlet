@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { XMarkIcon, HomeIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, HomeIcon, ShoppingCartIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import FocusTrap from 'focus-trap-react';
 
 export function MobileMenu({ isOpen, onClose }) {
@@ -50,6 +50,7 @@ export function MobileMenu({ isOpen, onClose }) {
     { href: '/', label: 'Home', icon: HomeIcon },
     { href: '/accessories', label: 'Accessories', icon: null },
     { href: '/trusted-installers', label: 'Installers', icon: null },
+    { href: '/contact', label: 'Contact', icon: EnvelopeIcon },
     { href: '/cart', label: 'Cart', icon: ShoppingCartIcon },
   ];
 
