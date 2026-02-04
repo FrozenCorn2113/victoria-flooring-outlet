@@ -24,10 +24,10 @@ export function WhyChooseSection() {
 
           <div>
             <h3 className="text-lg font-medium text-vfo-charcoal mb-3">
-              Commercial Quality.
+              First-Run Quality.
             </h3>
             <p className="text-sm font-light text-vfo-grey leading-relaxed">
-              Harbinger floors are engineered for durability—waterproof, scratch-resistant, and backed by a lifetime warranty.
+              Never seconds or closeouts—same quality as full retail. Waterproof, scratch-resistant, and backed by a lifetime warranty.
             </p>
           </div>
 

@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/router';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
+import marketingDescriptions from '@/data/vendor_product_marketing.json';
 
 export function HomeHero({ weeklyDeal, onOrderDeal }) {
   const router = useRouter();
@@ -30,6 +31,20 @@ export function HomeHero({ weeklyDeal, onOrderDeal }) {
     ? Math.round(((compareAtPricePerSqFt - pricePerSqFt) / compareAtPricePerSqFt) * 100)
     : 0;
 
+  // Build display name with series + brand when available
+  const marketingData = marketingDescriptions?.[weeklyDeal.slug];
+  const baseName = marketingData?.name || weeklyDeal.name?.split(/\s+\d/)?.[0]?.trim() || weeklyDeal.name;
+  const seriesLabel = marketingData?.series || weeklyDeal.collection;
+  const brandLabel = weeklyDeal.brand || 'Harbinger';
+  const hasBrandInSeries = seriesLabel?.toLowerCase().includes(brandLabel.toLowerCase());
+  const seriesWithBrand = seriesLabel
+    ? (hasBrandInSeries ? seriesLabel : `${brandLabel} ${seriesLabel}`)
+    : null;
+  const seriesPrefix = seriesLabel === 'Contract'
+    ? `${brandLabel} Contract Series`
+    : seriesWithBrand;
+  const displayName = seriesPrefix ? `${seriesPrefix} – ${baseName}` : baseName;
+
   return (
     <section className="bg-vfo-sand cursor-pointer" onClick={handleClick}>
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
@@ -41,12 +56,8 @@ export function HomeHero({ weeklyDeal, onOrderDeal }) {
             </p>
 
             <h1 className="mt-3 text-4xl md:text-5xl font-heading tracking-wide text-vfo-charcoal leading-tight">
-              {weeklyDeal.name}
+              {displayName}
             </h1>
-
-            <p className="mt-3 text-[17px] font-light tracking-wide text-vfo-grey">
-              {weeklyDeal.shortTagline || 'Beautiful floors, amazing prices.'}
-            </p>
 
             {/* Pricing card */}
             <div className="mt-6 rounded-lg border border-vfo-border bg-white px-5 py-4 shadow-sm">
@@ -129,7 +140,7 @@ export function HomeHero({ weeklyDeal, onOrderDeal }) {
               </div>
               <div className="relative w-full h-[500px] md:h-[650px]">
                 <Image
-                  src={weeklyDeal.image || '/images/Untitled design (21).png'}
+                  src={upgradeWixImageUrl(weeklyDeal.image) || '/images/Untitled design (21).png'}
                   alt={weeklyDeal.name}
                   fill
                   className="object-cover"

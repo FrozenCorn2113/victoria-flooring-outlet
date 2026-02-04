@@ -6,7 +6,7 @@ export function TrustSignals() {
   return (
     <section className="py-12 bg-white border-y border-vfo-border/30">
       <div className="max-w-6xl mx-auto px-4 md:px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-10">
 
           {/* Trust Signal 1: Warranty */}
           <div className="flex flex-col items-center text-center">
@@ -64,6 +64,21 @@ export function TrustSignals() {
             </h3>
             <p className="text-xs font-light text-vfo-grey leading-relaxed">
               Vetted local contractors ready to help
+            </p>
+          </div>
+
+          {/* Trust Signal 5: First-Run Quality */}
+          <div className="flex flex-col items-center text-center col-span-2 md:col-span-1">
+            <div className="w-12 h-12 mb-4 flex items-center justify-center">
+              <svg className="w-10 h-10 text-vfo-accent" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 className="text-sm font-medium text-vfo-charcoal mb-1 tracking-wide">
+              First-Run Quality
+            </h3>
+            <p className="text-xs font-light text-vfo-grey leading-relaxed">
+              Never seconds or closeouts · Same quality as full retail
             </p>
           </div>
 

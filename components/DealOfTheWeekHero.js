@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
+import marketingDescriptions from '@/data/vendor_product_marketing.json';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { CountdownTimer } from './CountdownTimer';
 
@@ -15,8 +16,13 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-vfo-accent/10 text-vfo-accent border border-vfo-accent/20">
               Weekly Deal
             </span>
-            <h1 className="mt-6 text-3xl md:text-4xl lg:text-5xl font-medium text-vfo-charcoal leading-tight">
-              New deal coming soon
+            <h1 className="mt-6 text-vfo-charcoal leading-tight">
+              <span className="block text-sm md:text-base tracking-[0.4em] uppercase font-semibold text-vfo-accent">
+                Deal of the Week
+              </span>
+              <span className="block mt-3 text-3xl md:text-4xl lg:text-5xl font-medium">
+                New deal coming soon
+              </span>
             </h1>
             <p className="mt-4 text-base md:text-lg text-vfo-grey">
               We’re updating the weekly deal right now. Join the list and we’ll notify you as
@@ -59,6 +65,19 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
   ];
 
   const highlights = weeklyDeal.highlights || defaultHighlights;
+  const marketingData = marketingDescriptions?.[weeklyDeal.slug];
+  // Build display name with series + brand when available
+  const baseName = marketingData?.name || weeklyDeal.name?.split(/\s+\d/)?.[0]?.trim() || weeklyDeal.name;
+  const seriesLabel = marketingData?.series || weeklyDeal.collection;
+  const brandLabel = weeklyDeal.brand || 'Harbinger';
+  const hasBrandInSeries = seriesLabel?.toLowerCase().includes(brandLabel.toLowerCase());
+  const seriesWithBrand = seriesLabel
+    ? (hasBrandInSeries ? seriesLabel : `${brandLabel} ${seriesLabel}`)
+    : null;
+  const seriesPrefix = seriesLabel === 'Contract'
+    ? `${brandLabel} Contract Series`
+    : seriesWithBrand;
+  const displayName = seriesPrefix ? `${seriesPrefix} – ${baseName}` : baseName;
 
   return (
     <section className="bg-white border-b border-vfo-border/30">
@@ -80,16 +99,14 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
             </div>
 
             {/* Product heading */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-medium text-vfo-charcoal mb-3 leading-tight">
-              {weeklyDeal.name}
+            <h1 className="text-vfo-charcoal mb-4 leading-tight">
+              <span className="block text-sm md:text-base tracking-[0.4em] uppercase font-semibold text-vfo-accent">
+                Deal of the Week
+              </span>
+              <span className="block mt-3 text-3xl md:text-4xl lg:text-5xl font-medium">
+                {displayName}
+              </span>
             </h1>
-
-            {/* Subheading */}
-            {weeklyDeal.shortTagline && (
-              <p className="text-lg md:text-xl text-vfo-grey font-light mb-6">
-                {weeklyDeal.shortTagline}
-              </p>
-            )}
 
             {/* Inline price display */}
             <div className="flex items-baseline gap-3 mb-6">
@@ -113,7 +130,7 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
 
             {/* Feature highlights */}
             <ul className="space-y-3 mb-8">
-              {highlights.map((highlight, index) => (
+              {highlights.slice(0, 3).map((highlight, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <CheckIcon className="w-5 h-5 text-vfo-accent flex-shrink-0 mt-0.5" />
                   <span className="text-base text-vfo-charcoal font-light">
@@ -146,7 +163,7 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
           >
             {weeklyDeal.image ? (
               <Image
-                src={weeklyDeal.image}
+                src={upgradeWixImageUrl(weeklyDeal.image)}
                 alt={`${weeklyDeal.name} installed in a beautiful interior`}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"

@@ -1,6 +1,6 @@
 // components/FloatingTyWidget.js
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { XMarkIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { ChatInterface } from './chat/ChatInterface';
@@ -22,13 +22,15 @@ export function FloatingTyWidget() {
     setMounted(true);
   }, []);
 
-  // Check localStorage for dismissed state - must complete before showing bubble
+  // Clear any old dismissed state on mount - bubble should show fresh each session
   useEffect(() => {
     if (!mounted) return;
 
-    const dismissed = window.localStorage.getItem(DISMISS_STORAGE_KEY) === 'true';
-    if (dismissed) {
-      setBubbleDismissed(true);
+    try {
+      // Clear old dismissed state so widget always appears on new sessions
+      window.localStorage.removeItem(DISMISS_STORAGE_KEY);
+    } catch (e) {
+      // Ignore localStorage errors
     }
     setDismissChecked(true);
   }, [mounted]);
@@ -42,8 +44,15 @@ export function FloatingTyWidget() {
       setShowBubble(true);
     }, 2500);
 
-    // Scroll listener - reshow bubble if user scrolls 20% down
+    // Throttled scroll listener - reshow bubble if user scrolls 20% down
+    let lastScrollTime = 0;
+    const throttleMs = 150;
+
     const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTime < throttleMs) return;
+      lastScrollTime = now;
+
       const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
 
       if (scrollPercent > 20 && bubbleDismissed && !hasScrollTriggered) {
@@ -52,7 +61,7 @@ export function FloatingTyWidget() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       clearTimeout(delayTimer);
@@ -64,7 +73,11 @@ export function FloatingTyWidget() {
     e.stopPropagation();
     setShowBubble(false);
     setBubbleDismissed(true);
-    window.localStorage.setItem(DISMISS_STORAGE_KEY, 'true');
+    try {
+      window.localStorage.setItem(DISMISS_STORAGE_KEY, 'true');
+    } catch (e) {
+      // Ignore localStorage errors
+    }
   };
 
   const handleAvatarClick = () => {
@@ -75,7 +88,11 @@ export function FloatingTyWidget() {
       if (bubbleDismissed && !isExpanded) {
         setBubbleDismissed(false);
         setHasScrollTriggered(false);
-        window.localStorage.removeItem(DISMISS_STORAGE_KEY);
+        try {
+          window.localStorage.removeItem(DISMISS_STORAGE_KEY);
+        } catch (e) {
+          // Ignore localStorage errors
+        }
       }
       setIsExpanded(!isExpanded);
     }
@@ -91,7 +108,7 @@ export function FloatingTyWidget() {
     setShowChat(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       if (showChat) {
         setShowChat(false);
@@ -99,7 +116,7 @@ export function FloatingTyWidget() {
         setIsExpanded(false);
       }
     }
-  };
+  }, [showChat, isExpanded]);
 
   useEffect(() => {
     if (isExpanded || showChat) {
@@ -108,13 +125,13 @@ export function FloatingTyWidget() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isExpanded, showChat]);
+  }, [isExpanded, showChat, handleKeyDown]);
 
-  const handleClickOutside = (e) => {
+  const handleClickOutside = useCallback((e) => {
     if (isExpanded && e.target.closest('.floating-ty-widget') === null) {
       setIsExpanded(false);
     }
-  };
+  }, [isExpanded]);
 
   useEffect(() => {
     if (isExpanded) {
@@ -123,7 +140,7 @@ export function FloatingTyWidget() {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isExpanded]);
+  }, [isExpanded, handleClickOutside]);
 
   // Don't render until mounted to avoid hydration mismatch
   if (!mounted) {
@@ -232,18 +249,16 @@ export function FloatingTyWidget() {
             src="/images/ty-avatar-280.png"
             alt="Ty - Flooring Expert"
             fill
-            sizes="140px"
+            sizes="70px"
             className="object-cover"
-            style={{ 
+            style={{
               objectPosition: 'center center',
             }}
             onError={() => {
-              console.error('Image failed to load');
               setImageError(true);
             }}
-            quality={100}
+            quality={80}
             priority
-            unoptimized
           />
         ) : (
           <div className="w-full h-full bg-[#1E1A15] flex items-center justify-center">

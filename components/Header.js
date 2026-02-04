@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
@@ -8,8 +8,20 @@ import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { MobileMenu } from './MobileMenu';
 
 const Header = () => {
-  const { totalPrice, cartCount } = useShoppingCart();
+  const { totalPrice, cartDetails } = useShoppingCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Calculate actual item count (boxes for flooring, units for accessories)
+  const cartCount = useMemo(() => {
+    return Object.values(cartDetails || {}).reduce((count, item) => {
+      if (item.pricePerSqFt && item.coverageSqFtPerBox) {
+        // Flooring: count boxes
+        return count + Math.ceil(item.quantity / item.coverageSqFtPerBox);
+      }
+      // Accessories: count units
+      return count + item.quantity;
+    }, 0);
+  }, [cartDetails]);
 
   return (
     <header className="sticky top-0 bg-white z-50 border-b border-vfo-border/30">

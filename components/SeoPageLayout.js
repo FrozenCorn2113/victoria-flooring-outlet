@@ -1,15 +1,19 @@
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 const SeoPageLayout = ({ title, children, ctaText = "See this week's deal", ctaHref = "/" }) => {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-vfo-bg">
       <article className="max-w-3xl mx-auto px-4 py-12 md:py-16">
         {/* Breadcrumb */}
-        <Link href="/">
-          <a className="text-sm text-vfo-accent hover:text-teal-600 mb-6 inline-block uppercase tracking-wide">
-            ← Back to Weekly Deal
-          </a>
-        </Link>
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-vfo-accent hover:text-teal-600 mb-6 inline-block uppercase tracking-wide"
+        >
+          ← Back
+        </button>
 
         {/* Title */}
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading tracking-[0.08em] text-vfo-slate mb-6 uppercase leading-tight">
