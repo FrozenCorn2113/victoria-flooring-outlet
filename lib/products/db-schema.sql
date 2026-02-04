@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS vendor_products (
   features JSONB,
   source_url TEXT,
   source_updated_at TIMESTAMP,
+  deal_content JSONB,
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

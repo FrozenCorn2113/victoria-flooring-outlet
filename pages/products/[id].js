@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
@@ -6,9 +6,10 @@ import Image from 'next/image';
 import Head from 'next/head';
 import Link from 'next/link';
 import { PhoneIcon } from '@heroicons/react/24/outline';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
 import { getUpsellProducts, calculateAccessoryQuantity } from '@/lib/products';
 import { getVendorProductById } from '@/lib/harbinger/sync';
+import { getWeeklyDeal } from '@/lib/products-server';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
 import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 import marketingData from '@/data/vendor_product_marketing.json';
@@ -208,6 +209,11 @@ const buildSpecSections = (specs) => {
   return [];
 };
 
+const shouldSkipFeatureKey = (key) => {
+  const skipKeys = ['badges', 'badge', 'images', 'image', 'url', 'urls'];
+  return skipKeys.includes(String(key).toLowerCase());
+};
+
 const buildFeatureList = (features) => {
   const parsed = parseJsonMaybe(features);
   if (!parsed) return [];
@@ -225,6 +231,7 @@ const buildFeatureList = (features) => {
         Object.entries(item).forEach(([key, value]) => {
           if (value === null || value === undefined || value === '') return;
           if (shouldSkipSpecEntry(key, value)) return;
+          if (shouldSkipFeatureKey(key)) return;
           items.push(`${formatSpecLabel(key)}: ${value}`);
         });
       }
@@ -234,7 +241,7 @@ const buildFeatureList = (features) => {
 
   if (typeof parsed === 'object') {
     return Array.from(new Set(Object.entries(parsed)
-      .filter(([key, value]) => value !== null && value !== undefined && value !== '' && !shouldSkipSpecEntry(key, value))
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '' && !shouldSkipSpecEntry(key, value) && !shouldSkipFeatureKey(key))
       .map(([key, value]) => `${formatSpecLabel(key)}: ${value}`)));
   }
 
@@ -289,16 +296,16 @@ const Product = props => {
 
   const productImages = useMemo(() => {
     if (props.images && props.images.length > 0) {
-      return props.images.map(image => image.url);
+      return props.images.map(image => upgradeWixImageUrl(image.url));
     }
-    return props.image ? [props.image] : [];
+    return props.image ? [upgradeWixImageUrl(props.image)] : [];
   }, [props.images, props.image]);
 
   const imagesForViewer = useMemo(() => {
     return productImages.length > 0 ? productImages : ['/flooring/placeholder.jpg'];
   }, [productImages]);
 
-  const activeImage = selectedImage || props.image || '/flooring/placeholder.jpg';
+  const activeImage = selectedImage || upgradeWixImageUrl(props.image) || '/flooring/placeholder.jpg';
 
   const vendorSpecSections = useMemo(() => {
     const sections = buildSpecSections(props.specs);
@@ -396,8 +403,6 @@ const Product = props => {
     return [...legacySpecSections, ...vendorSpecSections];
   }, [legacySpecSections, vendorSpecSections]);
 
-  const toastId = useRef();
-  const firstRun = useRef(true);
 
   const handlePrevImage = () => {
     setViewerIndex((prev) => {
@@ -512,18 +517,17 @@ const Product = props => {
     : 0;
 
   const handleOnAddToCart = () => {
-    setAdding(true);
     if (isAccessory) {
-      toastId.current = toast.loading(
-        `Adding ${quantity} ${quantity === 1 ? 'item' : 'items'}...`
-      );
       addItem(props, quantity);
     } else {
-      toastId.current = toast.loading(
-        `Adding ${sqFt} sq ft...`
-      );
       addItem(props, sqFt);
     }
+    setAdding(true);
+    setShowGoToCart(true);
+
+    setTimeout(() => {
+      setAdding(false);
+    }, 2000);
   };
 
   const handleAddUpsell = (upsellProduct) => {
@@ -538,24 +542,6 @@ const Product = props => {
     toast.success(`${quantityToAdd} ${upsellProduct.name} added to cart`);
   };
 
-  useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
-
-    setAdding(false);
-    setShowGoToCart(true);
-    if (isAccessory) {
-      toast.success(`${quantity} ${quantity === 1 ? 'item' : 'items'} of ${props.name} added`, {
-        id: toastId.current,
-      });
-    } else {
-      toast.success(`${sqFt} sq ft of ${props.name} added`, {
-        id: toastId.current,
-      });
-    }
-  }, [cartCount]);
 
   useEffect(() => {
     if (productImages.length === 0) {
@@ -747,9 +733,12 @@ const Product = props => {
         )}
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
           {/* Breadcrumb */}
-          <Link href="/" className="text-sm text-vfo-grey hover:text-vfo-charcoal mb-6 inline-block">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-vfo-grey hover:text-vfo-charcoal mb-6 inline-block"
+          >
             ← Back
-          </Link>
+          </button>
 
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-12">
             {/* Product Image Gallery */}
@@ -794,6 +783,61 @@ const Product = props => {
                   ))}
                 </div>
               )}
+
+              {props.coverageSqFtPerBox && (
+                <div className="bg-white border border-vfo-border rounded-lg px-4 py-3 text-sm text-vfo-charcoal">
+                  <span className="text-vfo-grey">Coverage per box:</span>
+                  <span className="ml-2 font-medium">{props.coverageSqFtPerBox} sq ft</span>
+                </div>
+              )}
+
+              {showWarrantyLink && (
+                <div className="bg-white border border-vfo-border rounded-lg px-4 py-3 text-sm text-vfo-charcoal">
+                  <span className="text-vfo-grey">Warranty:</span>
+                  <a
+                    href={warrantyPdfHref}
+                    className="ml-2 font-medium text-vfo-accent hover:text-teal-600"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Harbinger Warranty Guideline (PDF)
+                  </a>
+                </div>
+              )}
+
+              {/* Specs - Collapsed/Compact */}
+              {allSpecSections.length > 0 && (
+                <details className="bg-white rounded-lg border border-vfo-border px-5 py-4">
+                  <summary className="cursor-pointer text-base font-heading tracking-wide text-vfo-charcoal">
+                    Key Specifications
+                  </summary>
+                  <div className="mt-4 space-y-6">
+                    {allSpecSections.map((section) => (
+                      <div key={section.title}>
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-vfo-grey mb-3">
+                          {section.title}
+                        </h3>
+                        <table className="w-full text-sm border border-vfo-border">
+                          <tbody>
+                            {section.entries.map((entry, index) => (
+                              <tr key={`${section.title}-${entry.label}-${index}`} className="border-b border-vfo-border last:border-b-0">
+                                <th className="w-1/2 text-left font-medium text-vfo-charcoal bg-vfo-sand/60 px-3 py-2">
+                                  {entry.label}
+                                </th>
+                                <td className="px-3 py-2 text-vfo-grey">
+                                  {entry.value !== null && entry.value !== undefined && entry.value !== ''
+                                    ? String(entry.value)
+                                    : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
 
             {/* Product Details */}
@@ -805,7 +849,7 @@ const Product = props => {
                 {props.brand && !props.name?.toLowerCase().includes(props.brand.toLowerCase()) && (
                   <p className="text-[15px] font-light text-vfo-grey mb-2">Brand: {props.brand}</p>
                 )}
-                {displayDescription && (
+                {displayDescription && !props.dealContent?.theVibe && (
                   <p className="text-[15px] font-light text-vfo-grey leading-relaxed">
                     {displayDescription}
                   </p>
@@ -830,17 +874,12 @@ const Product = props => {
                 </div>
               )}
 
-              {showWarrantyLink && (
-                <div className="bg-white border border-vfo-border rounded-lg px-4 py-3 text-sm text-vfo-charcoal">
-                  <span className="text-vfo-grey">Warranty:</span>
-                  <a
-                    href={warrantyPdfHref}
-                    className="ml-2 font-medium text-vfo-accent hover:text-teal-600"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Harbinger Warranty Guideline (PDF)
-                  </a>
+              {/* Brief description for weekly deals */}
+              {props.dealContent?.theVibe && (
+                <div className="p-4 bg-vfo-sand/50 rounded-lg border border-vfo-border/50">
+                  <p className="text-[15px] font-light text-vfo-charcoal leading-relaxed">
+                    {props.dealContent.theVibe}
+                  </p>
                 </div>
               )}
 
@@ -887,12 +926,6 @@ const Product = props => {
                 </div>
               ) : (
                 <>
-                  {props.coverageSqFtPerBox && (
-                    <div className="bg-white border border-vfo-border rounded-lg px-4 py-3 text-sm text-vfo-charcoal">
-                      <span className="text-vfo-grey">Coverage per box:</span>
-                      <span className="ml-2 font-medium">{props.coverageSqFtPerBox} sq ft</span>
-                    </div>
-                  )}
                   <SquareFootageCalculator
                     coverageSqFtPerBox={props.coverageSqFtPerBox}
                     pricePerSqFt={pricePerSqFt}
@@ -910,9 +943,26 @@ const Product = props => {
                   type="button"
                   onClick={handleOnAddToCart}
                   disabled={adding || (isAccessory ? quantity < 1 : !sqFt || sqFt <= 0)}
-                  className="w-full px-8 py-3.5 bg-vfo-charcoal hover:bg-vfo-slate text-white font-medium text-base rounded-sm shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full px-8 py-3.5 text-white font-medium text-base rounded-sm shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    adding
+                      ? 'bg-teal-600'
+                      : 'bg-vfo-accent hover:bg-teal-600'
+                  }`}
                 >
-                  {adding ? 'Adding...' : isAccessory ? `Add ${quantity} to Cart` : `Add ${sqFt > 0 ? `${sqFt} sq ft` : 'to Cart'}`}
+                  {adding ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Added to Cart!
+                    </span>
+                  ) : isAccessory ? (
+                    `Add ${quantity} to Cart`
+                  ) : boxesNeeded > 0 ? (
+                    `Add ${boxesNeeded} ${boxesNeeded === 1 ? 'box' : 'boxes'} to Cart`
+                  ) : (
+                    'Add to Cart'
+                  )}
                 </button>
 
                 <Link
@@ -927,61 +977,87 @@ const Product = props => {
                 </Link>
               </div>
 
-              {/* Specs - Collapsed/Compact */}
-              {allSpecSections.length > 0 && (
-                <details className="bg-white rounded-lg border border-vfo-border px-5 py-4">
-                  <summary className="cursor-pointer text-base font-heading tracking-wide text-vfo-charcoal">
-                    Key Specifications
-                  </summary>
-                  <div className="mt-4 space-y-6">
-                    {allSpecSections.map((section) => (
-                      <div key={section.title}>
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-vfo-grey mb-3">
-                          {section.title}
-                        </h3>
-                        <table className="w-full text-sm border border-vfo-border">
-                          <tbody>
-                            {section.entries.map((entry, index) => (
-                              <tr key={`${section.title}-${entry.label}-${index}`} className="border-b border-vfo-border last:border-b-0">
-                                <th className="w-1/2 text-left font-medium text-vfo-charcoal bg-vfo-sand/60 px-3 py-2">
-                                  {entry.label}
-                                </th>
-                                <td className="px-3 py-2 text-vfo-grey">
-                                  {entry.value !== null && entry.value !== undefined && entry.value !== ''
-                                    ? String(entry.value)
-                                    : '—'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-
-              {/* Need Help? Phone Contact */}
-              <div className="pt-4 border-t border-vfo-border/50">
-                <p className="text-xs font-medium uppercase tracking-widest text-vfo-grey mb-2 text-center">
-                  Need Help?
-                </p>
-                <p className="text-xs font-light text-vfo-grey text-center mb-3">
-                  Questions about measurements, installation, or shipping?
-                </p>
-                <a
-                  href="tel:+1-778-871-7681"
-                  className="flex items-center justify-center gap-2 px-6 py-3 border border-vfo-accent text-vfo-accent hover:bg-vfo-accent hover:text-white font-medium text-sm rounded-sm transition-all"
-                >
-                  <PhoneIcon className="w-5 h-5" />
-                  <span>Click to Call</span>
-                </a>
-              </div>
             </div>
           </div>
 
-          {/* Marketing Copy Sections */}
-          {props.collection === 'Contract Series' && (
+          {/* Story-Driven Deal Content (for weekly deals with dealContent) */}
+          {props.dealContent && (
+            <div className="space-y-6 mb-8">
+              {/* Why People Choose It */}
+              {props.dealContent.whyPeopleChooseIt?.length > 0 && (
+                <section className="p-6 bg-white rounded-lg border border-vfo-border">
+                  <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
+                    Why People Choose It
+                  </h2>
+                  <ul className="space-y-3">
+                    {props.dealContent.whyPeopleChooseIt.map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="text-vfo-accent mt-1.5 flex-shrink-0">•</span>
+                        <span className="text-[15px] font-light text-vfo-grey leading-relaxed">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+
+              {/* Perfect For */}
+              {props.dealContent.perfectFor?.length > 0 && (
+                <section className="p-6 bg-white rounded-lg border border-vfo-border">
+                  <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
+                    Perfect For
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {props.dealContent.perfectFor.map((item, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1.5 bg-vfo-sand text-sm text-vfo-charcoal rounded-full border border-vfo-border"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Specs at a Glance */}
+              {props.dealContent.specsAtAGlance?.length > 0 && (
+                <section className="p-6 bg-white rounded-lg border border-vfo-border">
+                  <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
+                    Specs at a Glance
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {props.dealContent.specsAtAGlance.map((spec, index) => (
+                      <div key={index} className="text-sm">
+                        <span className="text-vfo-grey">{spec.label}:</span>
+                        <span className="ml-1 font-medium text-vfo-charcoal">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* How VFO Makes This Easy */}
+              {props.dealContent.howVfoMakesItEasy?.length > 0 && (
+                <section className="p-6 bg-teal-50/50 rounded-lg border border-teal-100">
+                  <h2 className="text-xl font-heading tracking-wide text-vfo-charcoal mb-4">
+                    How VFO Makes This Easy
+                  </h2>
+                  <ul className="space-y-3">
+                    {props.dealContent.howVfoMakesItEasy.map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="text-teal-600 mt-1.5 flex-shrink-0">✓</span>
+                        <span className="text-[15px] font-light text-teal-900 leading-relaxed">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Legacy Marketing Copy Sections (fallback for products without dealContent) */}
+          {!props.dealContent && props.collection === 'Contract Series' && (
             <>
               {/* About Harbinger Contract Series */}
               <section className="mb-8 p-6 bg-white rounded-lg border border-vfo-border">
@@ -1086,7 +1162,10 @@ const Product = props => {
                       {upsell.coverage && !isAccessory && sqFt > 0 && (
                         <div className="mb-3 p-2 bg-teal-50 rounded border border-teal-100">
                           <p className="text-xs font-medium text-teal-900">
-                            Recommended: {recommendedQty} {recommendedQty === 1 ? 'unit' : 'units'}
+                            Recommended: {recommendedQty}{' '}
+                            {upsell.subType === 'Adhesive'
+                              ? (recommendedQty === 1 ? 'gallon' : 'gallons')
+                              : (recommendedQty === 1 ? 'unit' : 'units')}
                           </p>
                           <p className="text-xs text-teal-700">
                             Based on {sqFt} sq ft flooring
@@ -1109,6 +1188,23 @@ const Product = props => {
               </div>
             </section>
           )}
+
+          {/* Need Help? Phone Contact */}
+          <div className="mt-12 border-t border-vfo-border/50 pt-8">
+            <p className="text-xs font-medium uppercase tracking-widest text-vfo-grey mb-2 text-center">
+              Need Help?
+            </p>
+            <p className="text-xs font-light text-vfo-grey text-center mb-3">
+              Questions about measurements, installation, or shipping?
+            </p>
+            <a
+              href="tel:+1-778-871-7681"
+              className="flex items-center justify-center gap-2 px-6 py-3 border border-vfo-accent text-vfo-accent hover:bg-vfo-accent hover:text-white font-medium text-sm rounded-sm transition-all max-w-md mx-auto"
+            >
+              <PhoneIcon className="w-5 h-5" />
+              <span>Click to Call</span>
+            </a>
+          </div>
         </div>
       </div>
     </>
@@ -1126,6 +1222,17 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   try {
+    if (params.id === 'deal-of-the-week') {
+      const weeklyDeal = await getWeeklyDeal();
+      if (!weeklyDeal) {
+        return { notFound: true };
+      }
+      return {
+        props: weeklyDeal,
+        revalidate: 60,
+      };
+    }
+
     if (params.id?.startsWith('vendor-')) {
       const vendorId = params.id.replace('vendor-', '');
       const vendorProduct = await getVendorProductById(vendorId);

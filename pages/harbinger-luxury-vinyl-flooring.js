@@ -47,10 +47,8 @@ export default function HarbingerLuxuryVinylFlooring({ weeklyDeal }) {
               ) : null}
             </div>
             {weeklyDeal.id ? (
-              <Link href={`/products/${weeklyDeal.id}`}>
-                <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-                  Shop This Deal →
-                </a>
+              <Link href={`/products/${weeklyDeal.id}`} className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
+                Shop This Deal →
               </Link>
             ) : null}
           </div>

@@ -65,6 +65,44 @@ const products = [
       'Suitable for all interior floor surfaces above, on or below grade.',
       'Lifetime limited residential finish warranty and 20-year commercial warranty.',
     ],
+    // Story-driven marketing content for Deal of the Week
+    dealContent: {
+      theVibe: "Coastal Oak brings an easy, modern feel to your space — soft grey undertones with warm oak grain that works whether you're renovating a 1970s split-level or finishing a brand-new basement suite. It's the kind of floor that looks good in photos but doesn't scream \"look at me\" when you walk in the room.",
+      whyPeopleChooseIt: [
+        "The colour hides dust, pet hair, and everyday mess better than most light floors — a real plus if you're not into daily sweeping.",
+        "Glue-down install means no hollow sounds underfoot, and it stays flat even with temperature swings.",
+        "Commercial-grade construction at residential pricing — this is the same spec contractors use in medical clinics and busy retail.",
+        "The embossed texture actually feels like wood grain, not plastic."
+      ],
+      goodToKnow: [
+        "Glue-down requires a smooth, clean subfloor. Concrete slabs need to be flat within 3mm over 3m and fully cured (at least 60 days for new pours). Plywood works great; particle board does not.",
+        "You'll need adhesive — we recommend UZIN KE 2000 S for most installs, or KR 430 for high-moisture areas like laundry rooms.",
+        "Direct sunlight through large windows can warm any floor — consider window film if you have south-facing glass walls."
+      ],
+      perfectFor: [
+        "Basement suites and rentals",
+        "Kitchens and laundry rooms",
+        "Home offices and dens",
+        "Light commercial (waiting rooms, small retail)",
+        "Homes with kids or pets"
+      ],
+      specsAtAGlance: [
+        { label: "Thickness", value: "2.0 mm" },
+        { label: "Wear Layer", value: "12 mil (0.3 mm)" },
+        { label: "Plank Size", value: '6" × 48"' },
+        { label: "Coverage", value: "48 sq ft/box" },
+        { label: "Edge", value: "Micro-bevel" },
+        { label: "Install", value: "Glue-down" },
+        { label: "Waterproof", value: "Yes, 100%" },
+        { label: "Radiant Heat", value: "Compatible" },
+        { label: "Warranty", value: "Lifetime residential / 20-year commercial" }
+      ],
+      howVfoMakesItEasy: [
+        "Local pickup in Victoria — no waiting weeks for shipping from the mainland.",
+        "Questions? Call or email us. We'll help you figure out how much you need, which adhesive to use, and whether your subfloor is ready.",
+        "All boxes from the same production batch, so your colour matches wall to wall."
+      ]
+    },
   },
   {
     id: 'uzin_ke_2000_s',
@@ -76,10 +114,11 @@ const products = [
     price: 8999, // $89.99 per gallon
     currency: 'CAD',
     image: '/images/uzin-ke-2000-s.png',
-    description: 'Professional-grade universal adhesive for resilient flooring installations. This wet or pressure-sensitive dispersion adhesive works with most vinyl, textile, and wall coverings and pairs with UZIN underlays. Coverage ranges from 75-210 sq ft per gallon depending on trowel notch and substrate conditions, making it a reliable choice for both small repairs and full room installs.',
-    shortTagline: 'Professional-grade universal adhesive for all resilient flooring.',
-    chooseThisIf: 'Standard residential installs, basements, bedrooms, or when you need a quick-drying, easy-to-use adhesive.',
-    bestFor: ['Most residential projects', 'Quick installations', 'Porous and non-porous substrates', 'DIY-friendly'],
+    datasheetUrl: '/resources/Uzin%20Ke%202000s.pdf',
+    description: 'Universal adhesive for common floor coverings including vinyl, LVT/LVP, carpet tile, carpet with common backings, rubber sheet/tile, linoleum, and VCT. Designed for porous and non-porous substrates with fast drying and low odor for occupied buildings.',
+    shortTagline: 'Universal adhesive for vinyl, LVT/LVP, and carpet.',
+    chooseThisIf: 'Standard residential installs or when you need a universal adhesive that also works with carpet tile and common carpet backings.',
+    bestFor: ['Most residential projects', 'Vinyl, LVT/LVP, and carpet tile', 'Porous and non-porous substrates', 'Quick installations'],
     isWeeklyDeal: false,
     compareAtPrice: null,
     upsellSkus: [],
@@ -121,10 +160,11 @@ const products = [
     price: 24999, // $249.99 per 10 kg kit
     currency: 'CAD',
     image: '/images/uzin-kr-430.png',
-    description: 'Premium 2-component polyurethane adhesive ideal for floor coverings that demand reliable bonding in extreme conditions. Suitable for installations subject to heavy use and rolling loads, UZIN KR 430 cures to an extremely high final strength and hardness with excellent resistance to plasticizers, surface moisture, and temperature exposure.',
-    shortTagline: 'Heavy-duty 2-component adhesive for extreme conditions.',
-    chooseThisIf: 'Commercial kitchens, warehouses, hospitals, or anywhere with heavy rolling loads and extreme conditions.',
-    bestFor: ['Heavy commercial use', 'Rolling loads (carts, equipment)', 'Extreme temperature exposure', 'High-moisture areas'],
+    datasheetUrl: '/resources/Uzin%20KR%20430.pdf',
+    description: '2-component polyurethane adhesive for demanding installations and extreme conditions. Suitable for LVT/LVP, PVC, rubber sheet, linoleum tile, rubber tiles, rubber granulate backed coverings, and sports flooring with strong resistance to plasticizers, surface moisture, and temperature exposure.',
+    shortTagline: 'Heavy-duty 2-component adhesive for extreme use.',
+    chooseThisIf: 'Heavy-duty residential or commercial installs, rolling loads, exterior/interior use, or moisture-prone areas.',
+    bestFor: ['LVT/LVP, PVC, rubber sheet/tile', 'Linoleum tile and sports flooring', 'Rolling loads and high moisture', 'Extreme temperature exposure'],
     isWeeklyDeal: false,
     compareAtPrice: null,
     upsellSkus: [],
@@ -167,10 +207,11 @@ const products = [
     price: 10999, // $109.99 per gallon
     currency: 'CAD',
     image: '/images/uzin-ke-66.png',
-    description: 'Premium fiber-reinforced wet set adhesive designed for vinyl and rubber flooring on porous substrates. This hard-setting, high shear strength adhesive has excellent resistance to indentations and shrinkage, making it especially effective in areas where rolling loads and heavy furniture are in use.',
-    shortTagline: 'Fiber-reinforced adhesive for high-traffic areas.',
-    chooseThisIf: 'High-traffic residential, offices, retail spaces, or anywhere with heavy furniture movement.',
-    bestFor: ['High-traffic areas', 'Porous substrates (concrete, plywood)', 'Rolling office chairs', 'Heavy furniture areas'],
+    datasheetUrl: '/resources/Uzin%20KE%2066.pdf',
+    description: 'Fiber-reinforced, hard-setting wet set adhesive for vinyl and rubber flooring on porous substrates. Designed for high shear strength with resistance to indentations and shrinkage, ideal for occupied buildings.',
+    shortTagline: 'Fiber-reinforced adhesive for vinyl and rubber.',
+    chooseThisIf: 'High-traffic residential or commercial spaces on porous substrates (concrete, plywood) with vinyl or rubber flooring.',
+    bestFor: ['Vinyl sheet/tile and LVT/LVP', 'Rubber sheet/tile up to 3/16"', 'Porous substrates only', 'High-traffic areas'],
     isWeeklyDeal: false,
     compareAtPrice: null,
     upsellSkus: [],
@@ -255,7 +296,7 @@ const products = [
     subType: 'Trim',
     price: 5500, // $55 per 7ft piece
     currency: 'CAD',
-    image: '/images/t-molding-optimized.jpg',
+    image: '/images/reducer.jpg',
     description: 'Colour-matched reducer transition for Harbinger flooring. Used to smoothly reduce height where your flooring meets a lower surface.',
     shortTagline: 'Colour-matched reducer for clean transitions.',
     useWhen: 'Your flooring meets a lower surface like carpet, tile, or an exterior door threshold.',
@@ -312,17 +353,17 @@ const products = [
   },
   {
     id: 'harbinger-flush-overlap-nosing',
-    slug: 'harbinger-flush-overlap-nosing',
-    name: 'Harbinger Flush/Overlap Nosing',
+    slug: 'harbinger-flush-nosing',
+    name: 'Harbinger Flush Nosing',
     brand: 'Harbinger',
     type: 'Accessory',
     subType: 'Trim',
     price: 5500, // $55 per 7ft piece
     currency: 'CAD',
-    image: '/images/t-molding-optimized.jpg',
-    description: 'Colour-matched stair/edge nosing to finish exposed edges and stair landings with a clean, durable lip.',
-    shortTagline: 'Stair and edge finish with a clean lip.',
-    useWhen: 'You have stairs, step-downs, or exposed edges that need a finished lip for safety and appearance.',
+    image: '/resources/Flushnosing.png',
+    description: 'Flush stair/edge nosing that finishes exposed edges with a clean, low-profile lip.',
+    shortTagline: 'Flush nosing for a clean, low-profile edge.',
+    useWhen: 'You want a flush stair nosing profile for exposed edges and step-downs.',
     appearanceNote: 'Colour matched to the flooring ordered. Photo shows the profile/shape only.',
     lengthFt: 7, // 2400mm = ~7ft per piece
     stepsPerPiece: 3, // One 7ft piece covers approximately 3 stair steps
@@ -344,17 +385,17 @@ const products = [
   },
   {
     id: 'harbinger-sac-square-nosing',
-    slug: 'harbinger-sac-square-nosing',
-    name: 'Harbinger SAC Square Nosing',
+    slug: 'harbinger-overlap-nosing',
+    name: 'Harbinger Overlap Nosing',
     brand: 'Harbinger',
     type: 'Accessory',
     subType: 'Trim',
     price: 5500, // $55 per 7ft piece
     currency: 'CAD',
-    image: '/images/t-molding-optimized.jpg',
-    description: 'Square stair nosing profile designed for thicker, acoustic click products and stair edges.',
-    shortTagline: 'Square nosing for thicker acoustic click profiles.',
-    useWhen: 'You have stairs with thicker acoustic click flooring (5mm+) that needs a square-edge finish.',
+    image: '/resources/OverlapNosing.png',
+    description: 'Overlap stair nosing profile that provides a more pronounced lip for finished stair edges.',
+    shortTagline: 'Overlap nosing for a finished stair edge.',
+    useWhen: 'You want an overlap nosing profile for stair edges and step-downs.',
     appearanceNote: 'Colour matched to the flooring ordered. Photo shows the profile/shape only.',
     lengthFt: 7, // 2400mm = ~7ft per piece
     stepsPerPiece: 3, // One 7ft piece covers approximately 3 stair steps
