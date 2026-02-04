@@ -1,9 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
 import products from '../products';
+import uzinKe2000 from '../images/uzin-ke-2000-s.png';
+import uzinKe66 from '../images/uzin-ke-66.png';
+import uzinKr430 from '../images/uzin-kr-430.png';
 
 // Get products by ID
 const getProduct = (id) => products.find(p => p.id === id);
@@ -15,94 +18,221 @@ const ADHESIVES = {
   commercial: getProduct('uzin_kr_430'),
 };
 
+const ADHESIVE_IMAGES = {
+  standard: uzinKe2000,
+  highTraffic: uzinKe66,
+  commercial: uzinKr430,
+};
+
+const ADHESIVE_LABELS = {
+  standard: 'Standard residential',
+  highTraffic: 'High-traffic residential',
+  commercial: 'Commercial / heavy-duty',
+};
+
 // Transition products
 const TRANSITIONS = {
   tMoulding: getProduct('harbinger-t-moulding'),
   reducer: getProduct('harbinger-reducer'),
   flushNosing: getProduct('harbinger-flush-overlap-nosing'),
-  sacNosing: getProduct('harbinger-sac-square-nosing'),
+  overlapNosing: getProduct('harbinger-sac-square-nosing'),
 };
 
-// Mini SVG diagrams for transitions
-const TransitionDiagram = ({ type }) => {
-  const diagrams = {
-    tMoulding: (
-      <svg viewBox="0 0 120 50" className="w-full h-12">
-        <rect x="5" y="20" width="45" height="12" fill="#8B7355" />
-        <rect x="70" y="20" width="45" height="12" fill="#8B7355" />
-        <path d="M50 20 L50 32 L55 32 L55 26 L58 23 L62 23 L65 26 L65 32 L70 32 L70 20 L65 20 L65 17 L55 17 L55 20 L50 20" fill="#C4A77D" stroke="#8B7355" strokeWidth="0.5" />
-        <text x="60" y="45" fontSize="6" fill="#666" textAnchor="middle">Doorway</text>
-      </svg>
-    ),
-    reducer: (
-      <svg viewBox="0 0 120 50" className="w-full h-12">
-        <rect x="5" y="18" width="50" height="12" fill="#8B7355" />
-        <rect x="70" y="24" width="45" height="8" fill="#A9A9A9" />
-        <path d="M55 18 L55 30 L60 30 Q65 30 68 32 L70 32 L70 24 L68 24 Q65 24 62 22 L55 18" fill="#C4A77D" stroke="#8B7355" strokeWidth="0.5" />
-        <text x="30" y="45" fontSize="6" fill="#666" textAnchor="middle">LVP</text>
-        <text x="92" y="45" fontSize="6" fill="#666" textAnchor="middle">Carpet/Tile</text>
-      </svg>
-    ),
-    nosing: (
-      <svg viewBox="0 0 120 60" className="w-full h-14">
-        <rect x="10" y="15" width="60" height="10" fill="#8B7355" />
-        <rect x="70" y="25" width="8" height="25" fill="#DDD" />
-        <rect x="78" y="40" width="35" height="10" fill="#8B7355" />
-        <path d="M65 15 L70 15 L75 15 L75 25 L72 28 Q70 30 68 30 L65 30 Q62 30 62 27 L62 15 L65 15" fill="#C4A77D" stroke="#8B7355" strokeWidth="0.5" />
-        <text x="40" y="55" fontSize="6" fill="#666" textAnchor="middle">Stair</text>
-      </svg>
-    ),
-  };
-  return diagrams[type] || null;
-};
-
-// Adhesive option card
-const AdhesiveOption = ({ adhesive, isSelected, onSelect, sqFt }) => {
-  const unitsNeeded = Math.ceil(sqFt / (adhesive?.coverage?.sqFtPerUnit || 150));
-  const totalPrice = unitsNeeded * (adhesive?.price || 0);
+const TransitionImage = ({ src, alt }) => {
+  if (!src) {
+    return (
+      <div className="flex h-20 w-32 items-center justify-center rounded-lg border border-vfo-muted/20 bg-vfo-bg text-[10px] text-vfo-muted">
+        Image coming soon
+      </div>
+    );
+  }
 
   return (
-    <button
-      onClick={onSelect}
+    <div className="relative h-20 w-32 overflow-hidden rounded-lg border border-vfo-muted/20 bg-white sm:h-24 sm:w-36">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 640px) 128px, 144px"
+        className="object-contain p-2"
+      />
+    </div>
+  );
+};
+
+const getGallonLabel = (count) => (count === 1 ? 'gallon' : 'gallons');
+
+// Adhesive selection card - expands when selected to show quantity controls
+const AdhesiveSelectionCard = ({
+  adhesive,
+  imageSrc,
+  label,
+  isSelected,
+  onSelect,
+  sqFt,
+  quantity,
+  onQuantityChange,
+  onAddToCart,
+  isAdding,
+}) => {
+  const bestFor = adhesive?.bestFor?.length ? adhesive.bestFor.join(', ') : null;
+  const coverageText =
+    adhesive?.specifications?.coverage ||
+    (adhesive?.coverage?.sqFtPerUnit ? `~${adhesive.coverage.sqFtPerUnit} sq ft per gallon` : null);
+  const dataSheetUrl = adhesive?.datasheetUrl || adhesive?.dataSheetUrl;
+  const recommendedUnits = Math.ceil(sqFt / (adhesive?.coverage?.sqFtPerUnit || 150));
+  const totalPrice = quantity * (adhesive?.price || 0);
+
+  return (
+    <div
+      onClick={() => !isSelected && onSelect()}
       className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
         isSelected
           ? 'border-vfo-accent bg-teal-50'
-          : 'border-vfo-muted/30 hover:border-vfo-muted/50 bg-white'
+          : 'border-vfo-muted/30 bg-white hover:border-vfo-muted/50 hover:bg-gray-50 cursor-pointer'
       }`}
     >
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-semibold text-vfo-slate text-sm">{adhesive?.name?.split(' - ')[0]}</h4>
-        {isSelected && (
-          <span className="text-xs bg-vfo-accent text-white px-2 py-0.5 rounded-full">Selected</span>
-        )}
-      </div>
-      <p className="text-xs text-vfo-bluegrey mb-2">{adhesive?.chooseThisIf}</p>
-      {sqFt > 0 && (
-        <div className="pt-2 border-t border-vfo-muted/20">
-          <div className="flex justify-between text-xs">
-            <span className="text-vfo-muted">For {sqFt} sq ft:</span>
-            <span className="font-medium text-vfo-slate">
-              {unitsNeeded} {unitsNeeded === 1 ? 'unit' : 'units'} = {formatCurrency(totalPrice)}
-            </span>
+      <div className="flex gap-4 items-start">
+        <div className="relative h-16 w-16 flex-shrink-0 rounded-lg border border-vfo-muted/20 bg-white">
+          {imageSrc && (
+            <Image
+              src={imageSrc}
+              alt={adhesive?.name || 'UZIN adhesive'}
+              fill
+              sizes="64px"
+              className="object-contain p-2"
+            />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-vfo-muted">{label}</p>
+              <h4 className="font-semibold text-vfo-slate text-base">{adhesive?.name?.split(' - ')[0]}</h4>
+            </div>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1 ${
+              isSelected ? 'border-vfo-accent bg-vfo-accent' : 'border-vfo-muted/40'
+            }`}>
+              {isSelected && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <p className="text-sm text-vfo-bluegrey mt-1">{adhesive?.chooseThisIf}</p>
+          <div className="mt-2 space-y-0.5">
+            {bestFor && (
+              <p className="text-xs text-vfo-muted">Best for: {bestFor}</p>
+            )}
+            {coverageText && (
+              <p className="text-xs text-vfo-muted">Coverage: {coverageText}</p>
+            )}
+            {dataSheetUrl && (
+              <a
+                href={dataSheetUrl}
+                className="inline-flex text-xs text-vfo-accent hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                View data sheet (PDF)
+              </a>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Expanded quantity controls when selected */}
+      {isSelected && (
+        <div className="mt-4 pt-4 border-t border-teal-200">
+          {sqFt > 0 && (
+            <p className="text-sm text-teal-700 mb-3">
+              <span className="font-medium">Recommended:</span> {recommendedUnits} {getGallonLabel(recommendedUnits)} for {sqFt} sq ft
+            </p>
+          )}
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onQuantityChange(Math.max(1, quantity - 1)); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-vfo-muted/30 bg-white hover:border-vfo-accent hover:bg-vfo-accent/5 text-vfo-slate font-medium text-lg"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={quantity}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-14 text-center py-2 border border-vfo-muted/30 rounded-lg text-vfo-slate font-medium bg-white focus:outline-none focus:ring-2 focus:ring-vfo-accent"
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); onQuantityChange(quantity + 1); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-vfo-muted/30 bg-white hover:border-vfo-accent hover:bg-vfo-accent/5 text-vfo-slate font-medium text-lg"
+              >
+                +
+              </button>
+              <span className="text-sm text-vfo-muted">{getGallonLabel(quantity)}</span>
+            </div>
+
+            <div className="text-right">
+              <p className="text-lg font-bold text-vfo-slate">{formatCurrency(totalPrice)}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); onAddToCart(adhesive, quantity); }}
+            disabled={isAdding}
+            className={`w-full mt-3 py-2.5 font-semibold rounded-lg transition-colors ${
+              isAdding
+                ? 'bg-teal-600 text-white'
+                : 'bg-vfo-accent hover:bg-teal-600 text-white'
+            }`}
+          >
+            {isAdding ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Added to Cart!
+              </span>
+            ) : (
+              'Add to Cart'
+            )}
+          </button>
+        </div>
       )}
-    </button>
+    </div>
   );
 };
 
 // Transition input row
-const TransitionInput = ({ label, description, diagram, value, onChange, pricePerUnit }) => {
+const TransitionInput = ({
+  label,
+  description,
+  detail,
+  imageSrc,
+  imageAlt,
+  value,
+  onChange,
+  pricePerUnit,
+}) => {
   const total = value * pricePerUnit;
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white rounded-lg border border-vfo-muted/20">
-      <div className="flex-shrink-0 w-24">
-        <TransitionDiagram type={diagram} />
-      </div>
+      <TransitionImage src={imageSrc} alt={imageAlt} />
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-vfo-slate text-sm">{label}</h4>
         <p className="text-xs text-vfo-bluegrey">{description}</p>
+        {detail && (
+          <p className="mt-1 text-[11px] text-vfo-muted">
+            {detail}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <button
@@ -136,74 +266,53 @@ const TransitionInput = ({ label, description, diagram, value, onChange, pricePe
   );
 };
 
-export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct }) {
+export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
   const { addItem } = useShoppingCart();
   const [activeTab, setActiveTab] = useState('adhesive');
-  const [selectedAdhesive, setSelectedAdhesive] = useState('standard');
-  const [addingItems, setAddingItems] = useState(false);
-  
+  const [selectedNosing, setSelectedNosing] = useState('flush');
+
+  // Adhesive selection state - null means no selection yet
+  const [selectedAdhesiveKey, setSelectedAdhesiveKey] = useState(null);
+  const [adhesiveQuantity, setAdhesiveQuantity] = useState(1);
+  const [isAddingAdhesive, setIsAddingAdhesive] = useState(false);
+
+  // When adhesive is selected, pre-fill recommended quantity based on sqFt
+  const handleAdhesiveSelect = (key) => {
+    setSelectedAdhesiveKey(key);
+    const adhesive = ADHESIVES[key];
+    const recommended = sqFt > 0
+      ? Math.ceil(sqFt / (adhesive?.coverage?.sqFtPerUnit || 150))
+      : 1;
+    setAdhesiveQuantity(recommended);
+    setIsAddingAdhesive(false);
+  };
+
+  const handleAddAdhesiveToCart = (adhesive, units) => {
+    if (units > 0 && adhesive) {
+      addItem(adhesive, units);
+      setIsAddingAdhesive(true);
+      // Show feedback, keep selection open
+      setTimeout(() => {
+        setIsAddingAdhesive(false);
+      }, 2000);
+    }
+  };
+
   // Transition quantities
   const [tMouldingQty, setTMouldingQty] = useState(0);
   const [reducerQty, setReducerQty] = useState(0);
-  const [stairSteps, setStairSteps] = useState(0);
-
-  // Calculate nosing pieces from stair steps (1 piece covers ~3 steps)
-  const nosingPieces = Math.ceil(stairSteps / 3);
-
-  // Get selected adhesive details
-  const adhesive = ADHESIVES[selectedAdhesive];
-  const adhesiveUnits = sqFt > 0 ? Math.ceil(sqFt / (adhesive?.coverage?.sqFtPerUnit || 150)) : 0;
-  const adhesiveTotal = adhesiveUnits * (adhesive?.price || 0);
+  const [nosingQty, setNosingQty] = useState(0);
 
   // Calculate transitions total
   const transitionPrice = TRANSITIONS.tMoulding?.price || 5500;
   const tMouldingTotal = tMouldingQty * transitionPrice;
   const reducerTotal = reducerQty * transitionPrice;
-  const nosingTotal = nosingPieces * transitionPrice;
+  const nosingProduct = selectedNosing === 'overlap' ? TRANSITIONS.overlapNosing : TRANSITIONS.flushNosing;
+  const nosingPrice = nosingProduct?.price || transitionPrice;
+  const nosingTotal = nosingQty * nosingPrice;
   const transitionsTotal = tMouldingTotal + reducerTotal + nosingTotal;
 
-  // Grand total
-  const grandTotal = adhesiveTotal + transitionsTotal;
-
-  // Items to add to cart
-  const itemsToAdd = useMemo(() => {
-    const items = [];
-    
-    if (adhesiveUnits > 0 && adhesive) {
-      items.push({ product: adhesive, quantity: adhesiveUnits });
-    }
-    
-    if (tMouldingQty > 0 && TRANSITIONS.tMoulding) {
-      items.push({ product: TRANSITIONS.tMoulding, quantity: tMouldingQty });
-    }
-    
-    if (reducerQty > 0 && TRANSITIONS.reducer) {
-      items.push({ product: TRANSITIONS.reducer, quantity: reducerQty });
-    }
-    
-    if (nosingPieces > 0 && TRANSITIONS.flushNosing) {
-      items.push({ product: TRANSITIONS.flushNosing, quantity: nosingPieces });
-    }
-    
-    return items;
-  }, [adhesiveUnits, adhesive, tMouldingQty, reducerQty, nosingPieces]);
-
-  const handleAddAllToCart = () => {
-    if (itemsToAdd.length === 0) return;
-    
-    setAddingItems(true);
-    itemsToAdd.forEach(({ product, quantity }) => {
-      addItem(product, quantity);
-    });
-    
-    setTimeout(() => setAddingItems(false), 1500);
-  };
-
-  const handleAddAdhesiveToCart = () => {
-    if (adhesiveUnits > 0 && adhesive) {
-      addItem(adhesive, adhesiveUnits);
-    }
-  };
+  const [isAddingTransitions, setIsAddingTransitions] = useState(false);
 
   const handleAddTransitionsToCart = () => {
     if (tMouldingQty > 0 && TRANSITIONS.tMoulding) {
@@ -212,9 +321,13 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
     if (reducerQty > 0 && TRANSITIONS.reducer) {
       addItem(TRANSITIONS.reducer, reducerQty);
     }
-    if (nosingPieces > 0 && TRANSITIONS.flushNosing) {
-      addItem(TRANSITIONS.flushNosing, nosingPieces);
+    if (nosingQty > 0 && nosingProduct) {
+      addItem(nosingProduct, nosingQty);
     }
+    setIsAddingTransitions(true);
+    setTimeout(() => {
+      setIsAddingTransitions(false);
+    }, 2000);
   };
 
   return (
@@ -240,11 +353,6 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
           }`}
         >
           Adhesive
-          {adhesiveTotal > 0 && (
-            <span className="ml-2 text-xs bg-vfo-accent/10 text-vfo-accent px-2 py-0.5 rounded-full">
-              {formatCurrency(adhesiveTotal)}
-            </span>
-          )}
         </button>
         <button
           onClick={() => setActiveTab('transitions')}
@@ -274,45 +382,22 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
             </div>
 
             <div className="space-y-3">
-              <AdhesiveOption
-                adhesive={ADHESIVES.standard}
-                isSelected={selectedAdhesive === 'standard'}
-                onSelect={() => setSelectedAdhesive('standard')}
-                sqFt={sqFt}
-              />
-              <AdhesiveOption
-                adhesive={ADHESIVES.highTraffic}
-                isSelected={selectedAdhesive === 'highTraffic'}
-                onSelect={() => setSelectedAdhesive('highTraffic')}
-                sqFt={sqFt}
-              />
-              <AdhesiveOption
-                adhesive={ADHESIVES.commercial}
-                isSelected={selectedAdhesive === 'commercial'}
-                onSelect={() => setSelectedAdhesive('commercial')}
-                sqFt={sqFt}
-              />
+              {Object.entries(ADHESIVES).map(([key, adhesive]) => (
+                <AdhesiveSelectionCard
+                  key={key}
+                  adhesive={adhesive}
+                  imageSrc={ADHESIVE_IMAGES[key]}
+                  label={ADHESIVE_LABELS[key]}
+                  isSelected={selectedAdhesiveKey === key}
+                  onSelect={() => handleAdhesiveSelect(key)}
+                  sqFt={sqFt}
+                  quantity={selectedAdhesiveKey === key ? adhesiveQuantity : 1}
+                  onQuantityChange={setAdhesiveQuantity}
+                  onAddToCart={handleAddAdhesiveToCart}
+                  isAdding={selectedAdhesiveKey === key && isAddingAdhesive}
+                />
+              ))}
             </div>
-
-            {sqFt > 0 && adhesiveUnits > 0 && (
-              <div className="mt-6 p-4 bg-white rounded-lg border border-vfo-muted/20">
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    <p className="font-medium text-vfo-slate">{adhesive?.name}</p>
-                    <p className="text-sm text-vfo-bluegrey">
-                      {adhesiveUnits} {adhesiveUnits === 1 ? 'unit' : 'units'} × {formatCurrency(adhesive?.price || 0)}
-                    </p>
-                  </div>
-                  <p className="text-xl font-bold text-vfo-slate">{formatCurrency(adhesiveTotal)}</p>
-                </div>
-                <button
-                  onClick={handleAddAdhesiveToCart}
-                  className="w-full py-2.5 bg-vfo-charcoal hover:bg-vfo-slate text-white font-medium rounded-lg transition-colors"
-                >
-                  Add Adhesive to Cart
-                </button>
-              </div>
-            )}
 
             {sqFt === 0 && (
               <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
@@ -330,39 +415,95 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
             <div className="mb-4">
               <h3 className="font-semibold text-vfo-slate mb-1">What transitions do you need?</h3>
               <p className="text-sm text-vfo-bluegrey">
-                Enter the number of each transition type for your project. Each piece is 7ft long and costs $55.
+                Enter the number of each transition type for your project. Each piece is a 7 ft board and costs $55.
+              </p>
+              <p className="text-xs text-vfo-muted mt-2">
+                T-mouldings and reducers include a matching track that fastens to the subfloor, and the transition snaps on top.
               </p>
             </div>
 
             <div className="space-y-3">
               <TransitionInput
                 label="T-Moulding"
-                description="Doorways between rooms with same-height floors"
-                diagram="tMoulding"
+                description="Use in doorways or openings between two floors of the same height."
+                detail="Full-length 7 ft board with matching track included."
+                imageSrc={TRANSITIONS.tMoulding?.image}
+                imageAlt="T-moulding transition profile with matching track"
                 value={tMouldingQty}
                 onChange={setTMouldingQty}
                 pricePerUnit={transitionPrice}
               />
               <TransitionInput
                 label="Reducer"
-                description="Transitions to carpet, tile, or lower surfaces"
-                diagram="reducer"
+                description="Use where LVP meets a lower surface like carpet, tile, or a lower slab."
+                detail="Full-length 7 ft board with matching track included."
+                imageSrc={TRANSITIONS.reducer?.image}
+                imageAlt="Reducer transition profile with matching track"
                 value={reducerQty}
                 onChange={setReducerQty}
                 pricePerUnit={transitionPrice}
               />
               <div className="p-4 bg-white rounded-lg border border-vfo-muted/20">
+                <div className="mb-4">
+                  <h4 className="font-medium text-vfo-slate text-sm">Stair Nosing</h4>
+                  <p className="text-xs text-vfo-bluegrey">
+                    Two profiles are available. Choose flush or overlap for your stair edge.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 mb-4">
+                  <button
+                    onClick={() => setSelectedNosing('flush')}
+                    className={`flex gap-3 p-3 rounded-lg border text-left transition-colors ${
+                      selectedNosing === 'flush'
+                        ? 'border-vfo-accent bg-teal-50'
+                        : 'border-vfo-muted/20 hover:border-vfo-muted/40'
+                    }`}
+                  >
+                    <TransitionImage
+                      src={TRANSITIONS.flushNosing?.image}
+                      alt={TRANSITIONS.flushNosing?.name || 'Flush/overlap stair nosing profile'}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-wide text-vfo-muted">Flush Nosing</p>
+                      <p className="text-sm font-medium text-vfo-slate">{TRANSITIONS.flushNosing?.name}</p>
+                      <p className="text-[11px] text-vfo-muted mt-1">
+                        {TRANSITIONS.flushNosing?.useWhen || 'Standard stair/edge lip for glue-down flooring.'}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedNosing('overlap')}
+                    className={`flex gap-3 p-3 rounded-lg border text-left transition-colors ${
+                      selectedNosing === 'overlap'
+                        ? 'border-vfo-accent bg-teal-50'
+                        : 'border-vfo-muted/20 hover:border-vfo-muted/40'
+                    }`}
+                  >
+                    <TransitionImage
+                      src={TRANSITIONS.overlapNosing?.image}
+                      alt={TRANSITIONS.overlapNosing?.name || 'Overlap stair nosing profile'}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-wide text-vfo-muted">Overlap Nosing</p>
+                      <p className="text-sm font-medium text-vfo-slate">{TRANSITIONS.overlapNosing?.name}</p>
+                      <p className="text-[11px] text-vfo-muted mt-1">
+                        {TRANSITIONS.overlapNosing?.useWhen || 'Overlap profile for stair edges and step-downs.'}
+                      </p>
+                    </div>
+                  </button>
+                </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-shrink-0 w-24">
-                    <TransitionDiagram type="nosing" />
-                  </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-vfo-slate text-sm">Stair Nosing</h4>
-                    <p className="text-xs text-vfo-bluegrey">For stairs and step-downs (1 piece covers ~3 steps)</p>
+                    <p className="text-xs text-vfo-bluegrey">
+                      Use on stair edges and step-downs for a finished lip.
+                    </p>
+                    <p className="mt-1 text-[11px] text-vfo-muted">
+                      Full-length 7 ft board cut to fit each stair.
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => setStairSteps(Math.max(0, stairSteps - 1))}
+                      onClick={() => setNosingQty(Math.max(0, nosingQty - 1))}
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-vfo-muted/30 hover:border-vfo-accent hover:bg-vfo-accent/5 text-vfo-slate font-medium"
                     >
                       -
@@ -371,24 +512,26 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
                       <input
                         type="number"
                         min="0"
-                        value={stairSteps}
-                        onChange={(e) => setStairSteps(Math.max(0, parseInt(e.target.value) || 0))}
+                        value={nosingQty}
+                        onChange={(e) => setNosingQty(Math.max(0, parseInt(e.target.value) || 0))}
                         className="w-14 text-center py-1.5 border border-vfo-muted/30 rounded-lg text-vfo-slate font-medium focus:outline-none focus:ring-2 focus:ring-vfo-accent"
                       />
-                      <p className="text-[10px] text-vfo-muted mt-0.5">steps</p>
+                      <p className="text-[10px] text-vfo-muted mt-0.5">pieces</p>
                     </div>
                     <button
-                      onClick={() => setStairSteps(stairSteps + 1)}
+                      onClick={() => setNosingQty(nosingQty + 1)}
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-vfo-muted/30 hover:border-vfo-accent hover:bg-vfo-accent/5 text-vfo-slate font-medium"
                     >
                       +
                     </button>
                   </div>
                   <div className="text-right min-w-[80px]">
-                    {nosingPieces > 0 ? (
+                    {nosingQty > 0 ? (
                       <div>
                         <span className="font-medium text-vfo-slate">{formatCurrency(nosingTotal)}</span>
-                        <p className="text-[10px] text-vfo-muted">{nosingPieces} {nosingPieces === 1 ? 'piece' : 'pieces'}</p>
+                        <p className="text-[10px] text-vfo-muted">
+                          {nosingQty} {nosingQty === 1 ? 'piece' : 'pieces'}
+                        </p>
                       </div>
                     ) : (
                       <span className="text-vfo-muted text-sm">$0</span>
@@ -413,9 +556,11 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
                       <span className="text-vfo-slate">{formatCurrency(reducerTotal)}</span>
                     </div>
                   )}
-                  {nosingPieces > 0 && (
+                  {nosingQty > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-vfo-bluegrey">{nosingPieces}× Stair Nosing ({stairSteps} steps)</span>
+                      <span className="text-vfo-bluegrey">
+                        {nosingQty}× {nosingProduct?.name || 'Stair Nosing'}
+                      </span>
                       <span className="text-vfo-slate">{formatCurrency(nosingTotal)}</span>
                     </div>
                   )}
@@ -426,9 +571,23 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
                 </div>
                 <button
                   onClick={handleAddTransitionsToCart}
-                  className="w-full py-2.5 bg-vfo-charcoal hover:bg-vfo-slate text-white font-medium rounded-lg transition-colors"
+                  disabled={isAddingTransitions}
+                  className={`w-full py-2.5 font-medium rounded-lg transition-colors ${
+                    isAddingTransitions
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-vfo-accent hover:bg-teal-600 text-white'
+                  }`}
                 >
-                  Add Transitions to Cart
+                  {isAddingTransitions ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Added to Cart!
+                    </span>
+                  ) : (
+                    'Add Transitions to Cart'
+                  )}
                 </button>
               </div>
             )}
@@ -442,28 +601,6 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0, flooringProduct
         )}
       </div>
 
-      {/* Grand Total Footer */}
-      {grandTotal > 0 && (
-        <div className="bg-vfo-slate px-6 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-white/70 text-sm">Total Accessories</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(grandTotal)}</p>
-            </div>
-            <button
-              onClick={handleAddAllToCart}
-              disabled={addingItems || itemsToAdd.length === 0}
-              className={`px-6 py-3 font-semibold rounded-lg transition-all ${
-                addingItems
-                  ? 'bg-green-500 text-white'
-                  : 'bg-vfo-accent hover:bg-teal-600 text-white'
-              }`}
-            >
-              {addingItems ? 'Added!' : `Add All ${itemsToAdd.length} Items to Cart`}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Help Link */}
       <div className="bg-white px-6 py-3 border-t border-vfo-muted/20 text-center">
