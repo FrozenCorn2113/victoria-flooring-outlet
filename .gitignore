@@ -32,3 +32,10 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# working/source images (use public/images for site assets)
+/images/
+
+# vendor data imports (one-time use)
+vendor_*.csv
+supabase_*.sql
