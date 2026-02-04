@@ -48,10 +48,8 @@ export default function FlooringDealsVictoriaBC({ weeklyDeal }) {
               ) : null}
             </div>
             {weeklyDeal.id ? (
-              <Link href={`/products/${weeklyDeal.id}`}>
-                <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-                  View This Week's Deal →
-                </a>
+              <Link href={`/products/${weeklyDeal.id}`} className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
+                View This Week's Deal →
               </Link>
             ) : null}
           </div>
@@ -97,10 +95,8 @@ export default function FlooringDealsVictoriaBC({ weeklyDeal }) {
           notified every Monday when we feature a new flooring product at a special price.
         </p>
 
-        <Link href="/#email-signup">
-          <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide mb-8">
-            Subscribe to Weekly Deals →
-          </a>
+        <Link href="/#email-signup" className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide mb-8">
+          Subscribe to Weekly Deals →
         </Link>
 
         <h2 className="text-2xl font-bold text-vfo-slate mt-8 mb-4 uppercase tracking-heading">
@@ -113,10 +109,8 @@ export default function FlooringDealsVictoriaBC({ weeklyDeal }) {
           you with experienced professionals.
         </p>
 
-        <Link href="/trusted-installers">
-          <a className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-            Find a Trusted Installer →
-          </a>
+        <Link href="/trusted-installers" className="inline-block px-6 py-3 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
+          Find a Trusted Installer →
         </Link>
       </SeoPageLayout>
     </>

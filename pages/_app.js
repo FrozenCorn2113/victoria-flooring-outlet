@@ -18,8 +18,8 @@ const FloatingTyWidget = dynamic(
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
 
-  // Show FloatingTyWidget only on homepage and product pages
-  const showTyWidget = router.pathname === '/' || router.pathname.startsWith('/products/');
+  // Show FloatingTyWidget everywhere except checkout pages
+  const showTyWidget = !router.pathname.startsWith('/checkout');
 
   useEffect(() => {
     const debugEnabled = typeof window !== 'undefined'

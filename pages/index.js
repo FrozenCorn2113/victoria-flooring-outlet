@@ -1,7 +1,8 @@
 import Head from 'next/head';
 import {
   DealOfTheWeekHero,
-  NextWeekPreviewSection
+  NextWeekPreviewSection,
+  WhyChooseSection
 } from '@/components/index';
 
 export default function Home({ weeklyDeal }) {
@@ -158,7 +159,10 @@ export default function Home({ weeklyDeal }) {
         {/* 1. Hero - Full-width lifestyle with single strong CTA */}
         <DealOfTheWeekHero weeklyDeal={weeklyDeal} />
 
-        {/* 2. Next Week Preview - Blurred teaser with newsletter signup */}
+        {/* 2. Why Choose Section - Value props */}
+        <WhyChooseSection />
+
+        {/* 3. Next Week Preview - Blurred teaser with newsletter signup */}
         <NextWeekPreviewSection />
       </main>
     </>

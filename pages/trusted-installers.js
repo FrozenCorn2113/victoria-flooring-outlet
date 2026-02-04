@@ -185,16 +185,16 @@ export default function TrustedInstallers() {
               Ready to Install Your New Flooring?
             </h2>
             <p className="text-base text-vfo-bluegrey mb-8 leading-relaxed max-w-2xl mx-auto">
-              Shop our weekly flooring deals and connect with one of our trusted installers 
-              to get your project started. We don't charge commissions on installation—you work 
+              Check out this week's flooring deal and connect with one of our trusted installers
+              to get your project started. We don't charge commissions on installation—you work
               directly with the installer.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/" className="inline-block px-8 py-4 bg-vfo-accent hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors uppercase tracking-wide">
-                Shop Flooring Deals →
+                See This Week's Deal →
               </Link>
-              <Link href="/flooring-deals-victoria-bc" className="inline-block px-8 py-4 bg-white hover:bg-vfo-bg text-vfo-slate font-semibold rounded-lg border-2 border-vfo-muted/30 hover:border-vfo-accent transition-all uppercase tracking-wide">
-                Learn More →
+              <Link href="/contact" className="inline-block px-8 py-4 bg-white hover:bg-vfo-bg text-vfo-slate font-semibold rounded-lg border-2 border-vfo-muted/30 hover:border-vfo-accent transition-all uppercase tracking-wide">
+                Want to Be Listed? Contact Us
               </Link>
             </div>
           </div>
