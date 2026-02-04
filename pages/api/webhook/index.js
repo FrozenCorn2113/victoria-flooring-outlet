@@ -29,19 +29,14 @@ export default async function handler(req, res) {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.log(`❌ Error message: ${err.message}`);
+      console.error('Webhook signature verification failed:', err.message);
       res.status(400).send(`Webhook Error: ${err.message}`);
       return;
     }
 
-    // Successfully constructed event
-    console.log('✅ Success:', event.id);
-
     // 2. Handle event type (add business logic here)
     if (event.type === 'checkout.session.completed') {
-      console.log(`💰  Payment received!`);
-    } else {
-      console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
+      // Payment received - handled by /api/stripe/webhook
     }
 
     // 3. Return a response to acknowledge receipt of the event.
