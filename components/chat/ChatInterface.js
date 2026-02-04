@@ -176,30 +176,45 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
               I&apos;d love to help further! Share your contact info so Ty can follow up with personalized recommendations and quotes.
             </p>
             <form onSubmit={handleLeadSubmit} className="space-y-2">
-              <input
-                type="text"
-                value={leadInfo.name}
-                onChange={(e) => handleLeadChange('name', e.target.value)}
-                placeholder="Your name"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
-                required
-              />
-              <input
-                type="email"
-                value={leadInfo.email}
-                onChange={(e) => handleLeadChange('email', e.target.value)}
-                placeholder="Email address"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
-                required
-              />
-              <input
-                type="tel"
-                value={leadInfo.phone}
-                onChange={(e) => handleLeadChange('phone', e.target.value)}
-                placeholder="Phone number"
-                className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
-                required
-              />
+              <div>
+                <label htmlFor="lead-name" className="sr-only">Your name</label>
+                <input
+                  id="lead-name"
+                  type="text"
+                  value={leadInfo.name}
+                  onChange={(e) => handleLeadChange('name', e.target.value)}
+                  placeholder="Your name"
+                  className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                  required
+                  autoComplete="name"
+                />
+              </div>
+              <div>
+                <label htmlFor="lead-email" className="sr-only">Email address</label>
+                <input
+                  id="lead-email"
+                  type="email"
+                  value={leadInfo.email}
+                  onChange={(e) => handleLeadChange('email', e.target.value)}
+                  placeholder="Email address"
+                  className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <label htmlFor="lead-phone" className="sr-only">Phone number</label>
+                <input
+                  id="lead-phone"
+                  type="tel"
+                  value={leadInfo.phone}
+                  onChange={(e) => handleLeadChange('phone', e.target.value)}
+                  placeholder="Phone number"
+                  className="w-full px-3 py-2 border border-[#D6D1C8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E1A15] bg-white"
+                  required
+                  autoComplete="tel"
+                />
+              </div>
               {leadError && (
                 <p className="text-xs text-red-600">{leadError}</p>
               )}

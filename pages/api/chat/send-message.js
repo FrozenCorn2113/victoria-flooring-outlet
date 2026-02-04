@@ -227,7 +227,9 @@ export default async function handler(req, res) {
     // Try to broadcast error state
     try {
       await broadcastAIResponding(sessionId, false);
-    } catch {}
+    } catch (broadcastErr) {
+      console.error('Failed to broadcast error state:', broadcastErr.message);
+    }
 
     // Degraded fallback: attempt AI response without DB persistence
     const aiResult = await generateAIResponse({
