@@ -224,7 +224,7 @@ export function FloatingTyWidget() {
               aria-label="Call Ty at 778-871-7681"
               className="inline-flex items-center justify-center rounded-full border border-[#D6D1C8] bg-white px-5 py-2.5 text-sm font-semibold text-[#1E1A15] hover:bg-[#F7F5F1] transition-colors"
             >
-              📞 Call (778) 871-7681
+              📞 Call 778-871-7681
             </a>
           </div>
 

@@ -22,7 +22,7 @@ export function TalkToTy() {
           href="tel:7788717681"
           className="inline-flex justify-center text-xs font-medium text-[#6B6458] hover:text-[#1E1A15] transition-colors"
         >
-          or call: (778) 871-7681
+          or call: 778-871-7681
         </a>
       </div>
 

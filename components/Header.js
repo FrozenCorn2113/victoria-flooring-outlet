@@ -24,10 +24,10 @@ const Header = () => {
   }, [cartDetails]);
 
   return (
-    <header className="sticky top-0 bg-white z-50 border-b border-vfo-border/30">
+    <header className="sticky top-0 bg-white z-50">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         {/* Top trust bar - Desktop only */}
-        <div className="hidden md:flex items-center justify-center py-2.5 text-xs tracking-wide border-b border-vfo-border/20">
+        <div className="hidden md:flex items-center justify-center py-2.5 text-xs tracking-wide">
           <div className="flex items-center gap-6 text-vfo-grey">
             <span className="flex items-center gap-2">
               <ShieldCheckIcon className="w-3.5 h-3.5" />
@@ -43,7 +43,7 @@ const Header = () => {
         {/* Main header */}
         <div className="flex items-center justify-between h-20 md:h-24 lg:h-28 xl:h-32">
           {/* Logo - Left aligned */}
-          <div className="flex items-center flex-1">
+          <div className="flex items-center flex-1 -mt-1">
             <Logo />
           </div>
 

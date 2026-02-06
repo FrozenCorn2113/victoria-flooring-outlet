@@ -143,7 +143,7 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
             <p className="text-sm text-red-700">{error}</p>
             <p className="text-xs text-red-600 mt-1">
-              Please text Ty at (778) 871-7681 for assistance.
+              Please text Ty at 778-871-7681 for assistance.
             </p>
           </div>
         )}
@@ -283,7 +283,7 @@ export function ChatInterface({ onClose, onMinimize, context = {} }) {
           </a>
           {' '}or{' '}
           <a href="tel:7788717681" className="underline hover:text-[#1E1A15]">
-            call (778) 871-7681
+            call 778-871-7681
           </a>
         </p>
       </div>

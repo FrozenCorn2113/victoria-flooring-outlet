@@ -38,10 +38,8 @@ const SeoPageLayout = ({ title, children, ctaText = "See this week's deal", ctaH
               : ctaText
             }
           </p>
-          <Link href={ctaHref}>
-            <a className="inline-block px-8 py-4 bg-vfo-accent hover:bg-teal-600 text-white font-medium rounded-lg transition-colors uppercase tracking-wide">
+          <Link href={ctaHref} className="inline-block px-8 py-4 bg-vfo-accent hover:bg-teal-600 text-white font-medium rounded-lg transition-colors uppercase tracking-wide">
               {ctaText === "See this week's deal" ? "See This Week's Deal →" : ctaText + " →"}
-            </a>
           </Link>
         </div>
       </article>

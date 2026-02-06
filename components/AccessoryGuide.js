@@ -328,7 +328,7 @@ export default function AccessoryGuide({ products }) {
             href="tel:7788717681"
             className="inline-flex items-center justify-center px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors"
           >
-            Call (778) 871-7681
+            Call 778-871-7681
           </a>
         </div>
       </div>

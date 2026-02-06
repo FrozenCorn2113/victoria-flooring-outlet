@@ -4,9 +4,6 @@ import Link from 'next/link';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
 import products from '../products';
-import uzinKe2000 from '../images/uzin-ke-2000-s.png';
-import uzinKe66 from '../images/uzin-ke-66.png';
-import uzinKr430 from '../images/uzin-kr-430.png';
 
 // Get products by ID
 const getProduct = (id) => products.find(p => p.id === id);
@@ -19,9 +16,9 @@ const ADHESIVES = {
 };
 
 const ADHESIVE_IMAGES = {
-  standard: uzinKe2000,
-  highTraffic: uzinKe66,
-  commercial: uzinKr430,
+  standard: '/images/uzin-ke-2000-s.png',
+  highTraffic: '/images/uzin-ke-66.png',
+  commercial: '/images/uzin-kr-430.png',
 };
 
 const ADHESIVE_LABELS = {

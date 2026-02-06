@@ -40,8 +40,8 @@ export default function CheckoutCancel() {
         {/* Help Text */}
         <p className="text-xs text-vfo-lightgrey mt-6">
           Need help? Text Ty at{' '}
-          <a href="sms:+12508867775" className="text-vfo-accent hover:underline">
-            250-886-7775
+          <a href="sms:7788717681" className="text-vfo-accent hover:underline">
+            778-871-7681
           </a>
         </p>
       </div>
