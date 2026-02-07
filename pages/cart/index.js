@@ -444,9 +444,10 @@ const Cart = () => {
               </div>
 
               {/* Email capture for abandoned cart tracking */}
-              {shippingResult?.valid && !emailCaptured && (
+              {shippingResult?.valid && (
                 <CheckoutEmailCapture
                   onEmailCaptured={handleEmailCaptured}
+                  onProceedToCheckout={redirectToCheckout}
                   cartItems={Object.values(cartDetails).map(item => ({
                     name: item.name,
                     quantity: item.quantity,
@@ -459,19 +460,6 @@ const Cart = () => {
                   postalCode={postalCode}
                   shippingZone={shippingResult?.zone}
                 />
-              )}
-
-              {/* Checkout button (only visible after email captured) */}
-              {emailCaptured && (
-                <div className="flex flex-col items-end">
-                  <button
-                    onClick={redirectToCheckout}
-                    disabled={redirecting}
-                    className="border rounded py-2 px-6 bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 focus:ring-4 focus:ring-opacity-50 focus:ring-emerald-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 max-w-max"
-                  >
-                    {redirecting ? 'Redirecting...' : 'Go to Checkout'}
-                  </button>
-                </div>
               )}
 
               {/* Validation messages */}

@@ -7,7 +7,8 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { event } from '@/lib/analytics';
 
 const CheckoutEmailCapture = ({ 
-  onEmailCaptured, 
+  onEmailCaptured,
+  onProceedToCheckout, // New prop to auto-proceed after capture
   cartItems, 
   cartTotal, 
   dealId, 
@@ -51,7 +52,7 @@ const CheckoutEmailCapture = ({
       if (response.ok) {
         setCaptured(true);
         onEmailCaptured(email, data.sessionToken);
-        toast.success('Email saved! You can now proceed to checkout.');
+        toast.success('Email saved! Redirecting to checkout...');
         event({
           action: 'generate_lead',
           category: 'checkout',
@@ -60,6 +61,13 @@ const CheckoutEmailCapture = ({
           method: 'email',
           currency: 'CAD',
         });
+        
+        // Auto-proceed to checkout after capture
+        if (onProceedToCheckout) {
+          setTimeout(() => {
+            onProceedToCheckout();
+          }, 500); // Small delay so user sees the success message
+        }
       } else {
         toast.error(data.error || 'Something went wrong. Please try again.');
       }
@@ -74,12 +82,12 @@ const CheckoutEmailCapture = ({
   if (captured) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-sm p-4 mb-4" role="status">
-        <p className="text-green-800 text-sm">
-          ✓ Email saved: <strong>{email}</strong>
-        </p>
-        <p className="text-green-700 text-xs mt-1">
-          Click "Go to Checkout" below to complete your order
-        </p>
+        <div className="flex items-center gap-2">
+          <ArrowPathIcon className="w-4 h-4 animate-spin text-green-600" />
+          <p className="text-green-800 text-sm">
+            Email saved! Redirecting to secure checkout...
+          </p>
+        </div>
       </div>
     );
   }
