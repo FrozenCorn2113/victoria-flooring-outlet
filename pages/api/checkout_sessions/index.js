@@ -1,4 +1,7 @@
 import Stripe from 'stripe';
+import { getWeeklyDealFromDb } from '../../../lib/harbinger/sync';
+import { calculateShipping, validateCanadianPostalCode } from '../../../lib/shipping';
+import products from '../../../products';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -21,73 +24,200 @@ function getValidOrigin(requestOrigin) {
   return ALLOWED_ORIGINS[0];
 }
 
+// Build a lookup map of known accessory products by name for server-side price validation
+const accessoryPriceMap = new Map();
+for (const product of products) {
+  if (product.type === 'Accessory' && product.name && product.price) {
+    accessoryPriceMap.set(product.name, {
+      id: product.id,
+      price: product.price, // already in cents
+    });
+  }
+}
+
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
+  }
+
+  try {
+    if (!stripe) {
+      return res.status(503).json({
+        statusCode: 503,
+        message: 'Stripe is not configured. Please add STRIPE_SECRET_KEY.'
+      });
+    }
+
+    const { items, postalCode, shippingZone } = req.body || {};
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'No items provided' });
+    }
+
+    // -------------------------------------------------------
+    // SERVER-SIDE PRICE VALIDATION
+    // Never trust client-provided prices — always verify against DB/catalog
+    // -------------------------------------------------------
+
+    let weeklyDeal = null;
     try {
-      if (!stripe) {
-        return res.status(503).json({
-          statusCode: 503,
-          message: 'Stripe is not configured. Please add STRIPE_SECRET_KEY.'
-        });
-      }
-      const { items, shipping, postalCode, shippingZone } = req.body || {};
+      weeklyDeal = await getWeeklyDealFromDb();
+    } catch (err) {
+      console.error('Failed to fetch weekly deal for validation:', err.message);
+    }
 
-      // Build line items
-      const lineItems = items || [];
+    const validatedLineItems = [];
 
-      // Add shipping as a line item if provided (in cents)
-      if (shipping && shipping > 0) {
-        lineItems.push({
+    for (const item of items) {
+      const clientName = item.price_data?.product_data?.name || '';
+      const clientUnitAmount = item.price_data?.unit_amount;
+      const clientQuantity = item.quantity || 1;
+
+      // Skip client-provided shipping — we recalculate below
+      if (clientName === 'Shipping') continue;
+
+      // Check if this is a known accessory
+      const knownAccessory = accessoryPriceMap.get(clientName);
+
+      if (knownAccessory) {
+        // ---- ACCESSORY: use server-side catalog price ----
+        if (clientUnitAmount !== knownAccessory.price) {
+          console.warn(
+            `Price mismatch for "${clientName}": client=${clientUnitAmount}, server=${knownAccessory.price}`
+          );
+        }
+        validatedLineItems.push({
           price_data: {
             currency: 'cad',
-            product_data: {
-              name: 'Shipping',
-            },
-            unit_amount: shipping,
+            product_data: { name: clientName },
+            unit_amount: knownAccessory.price,
           },
-          quantity: 1,
+          quantity: clientQuantity,
+        });
+      } else if (weeklyDeal) {
+        // ---- FLOORING (weekly deal): validate against DB ----
+        const dealEndsAt = new Date(weeklyDeal.endsAt || weeklyDeal.ends_at);
+        const dealStartsAt = new Date(weeklyDeal.startsAt || weeklyDeal.starts_at);
+        const now = new Date();
+
+        if (now < dealStartsAt || now > dealEndsAt) {
+          return res.status(410).json({
+            error: 'This deal has expired',
+            redirect: '/deal-expired',
+          });
+        }
+
+        const serverPriceCents = Math.round(
+          (weeklyDeal.pricePerSqFt || weeklyDeal.price_per_sqft) * 100
+        );
+
+        if (clientUnitAmount !== serverPriceCents) {
+          console.warn(
+            `Price mismatch for "${clientName}": client=${clientUnitAmount}, server=${serverPriceCents}`
+          );
+        }
+
+        validatedLineItems.push({
+          price_data: {
+            currency: 'cad',
+            product_data: { name: clientName },
+            unit_amount: serverPriceCents,
+          },
+          quantity: clientQuantity,
+        });
+      } else {
+        // No weekly deal and not a known accessory
+        // Reject — we can't validate the price
+        console.error(`Cannot validate price for unknown product: "${clientName}"`);
+        return res.status(400).json({
+          error: `Unable to verify price for "${clientName}". Please refresh and try again.`,
         });
       }
-
-      // Build items summary for metadata (Stripe limits metadata to 500 chars per value)
-      const itemsSummary = (items || [])
-        .filter(item => item.price_data?.product_data?.name !== 'Shipping')
-        .map(item => `${item.price_data?.product_data?.name || 'Item'} x${item.quantity}`)
-        .join(', ')
-        .slice(0, 490);
-
-      // Calculate subtotal (excluding shipping)
-      const subtotal = (items || []).reduce((sum, item) => {
-        const amount = item.price_data?.unit_amount || 0;
-        return sum + (amount * (item.quantity || 1));
-      }, 0);
-
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        payment_method_types: ['card'],
-        line_items: lineItems,
-        billing_address_collection: 'required',
-        phone_number_collection: { enabled: true },
-        shipping_address_collection: {
-          allowed_countries: ['CA'],
-        },
-        metadata: {
-          items_summary: itemsSummary,
-          postal_code: postalCode || '',
-          shipping_zone: shippingZone || '',
-          subtotal: String(subtotal),
-          shipping_cost: String(shipping || 0),
-        },
-        success_url: `${getValidOrigin(req.headers.origin)}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${getValidOrigin(req.headers.origin)}/cart`,
-      });
-
-      res.status(200).json(session);
-    } catch (err) {
-      res.status(500).json({ statusCode: 500, message: err.message });
     }
-  } else {
-    res.setHeader('Allow', 'POST');
-    res.status(405).end('Method Not Allowed');
+
+    if (validatedLineItems.length === 0) {
+      return res.status(400).json({ error: 'No valid items to checkout' });
+    }
+
+    // -------------------------------------------------------
+    // SERVER-SIDE SHIPPING CALCULATION
+    // Never trust client-provided shipping amount
+    // -------------------------------------------------------
+
+    let shippingCost = 0;
+    let validatedZone = shippingZone || '';
+    let formattedPostalCode = postalCode || '';
+
+    if (postalCode && validateCanadianPostalCode(postalCode)) {
+      // Count total boxes for shipping calculation
+      let totalBoxes = 0;
+      for (const item of validatedLineItems) {
+        const isAccessory = accessoryPriceMap.has(item.price_data?.product_data?.name);
+        if (!isAccessory && weeklyDeal) {
+          const coveragePerBox = weeklyDeal.coverageSqFtPerBox
+            || weeklyDeal.coverage_sqft_per_box
+            || 48;
+          totalBoxes += Math.ceil(item.quantity / coveragePerBox);
+        }
+      }
+
+      if (totalBoxes > 0) {
+        const shippingResult = calculateShipping({ postalCode, totalBoxes });
+        if (shippingResult.valid) {
+          shippingCost = shippingResult.shipping;
+          validatedZone = shippingResult.zone;
+          formattedPostalCode = shippingResult.formattedPostalCode;
+        }
+      }
+    }
+
+    // Add shipping as a line item
+    if (shippingCost > 0) {
+      validatedLineItems.push({
+        price_data: {
+          currency: 'cad',
+          product_data: { name: 'Shipping' },
+          unit_amount: shippingCost,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Build items summary for metadata (Stripe limits metadata to 500 chars per value)
+    const itemsSummary = validatedLineItems
+      .filter(item => item.price_data?.product_data?.name !== 'Shipping')
+      .map(item => `${item.price_data?.product_data?.name || 'Item'} x${item.quantity}`)
+      .join(', ')
+      .slice(0, 490);
+
+    const subtotal = validatedLineItems
+      .filter(item => item.price_data?.product_data?.name !== 'Shipping')
+      .reduce((sum, item) => sum + (item.price_data.unit_amount * (item.quantity || 1)), 0);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: validatedLineItems,
+      billing_address_collection: 'required',
+      phone_number_collection: { enabled: true },
+      shipping_address_collection: {
+        allowed_countries: ['CA'],
+      },
+      metadata: {
+        items_summary: itemsSummary,
+        postal_code: formattedPostalCode,
+        shipping_zone: validatedZone,
+        subtotal: String(subtotal),
+        shipping_cost: String(shippingCost),
+      },
+      success_url: `${getValidOrigin(req.headers.origin)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getValidOrigin(req.headers.origin)}/cart`,
+    });
+
+    res.status(200).json(session);
+  } catch (err) {
+    console.error('Checkout session error:', err);
+    res.status(500).json({ statusCode: 500, message: err.message });
   }
 }

@@ -1,8 +1,11 @@
 // pages/api/cron/send-weekly-sneak.js
-// Vercel Cron handler to send weekly sneak peek via MailerLite
+// Vercel Cron handler to send weekly Deal of the Week email via MailerLite
+// Two-section format: THIS WEEK (live deal) + NEXT WEEK (preview)
 
 import { query } from '@/lib/db';
-import { getNextWeeklyDealFromDb, getWeeklyDealFromDb } from '@/lib/harbinger/sync';
+import { getWeeklyDealFromDb, getNextWeeklyDealFromDb } from '@/lib/harbinger/sync';
+import { createAndSendCampaign, getGroupIds, isMailerLiteConfigured } from '@/lib/mailerlite';
+import { generateWeeklyDealDropEmail, generateWeeklyDealDropEmailText } from '@/lib/email-templates/weekly-deal-drop';
 
 function getSecretFromRequest(req) {
   const header = req.headers.authorization || '';
@@ -15,181 +18,153 @@ function getSecretFromRequest(req) {
   return null;
 }
 
-function formatMoney(amount, currency = 'CAD') {
-  if (amount === null || amount === undefined) return null;
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(Number(amount));
-}
+/**
+ * Transform DB deal into email template format
+ */
+function transformDealForEmail(deal) {
+  if (!deal) return null;
 
-function buildEmailHtml({ deal, siteUrl }) {
-  const title = deal.name;
-  const description = deal.description || 'A sneak peek at next week\'s flooring deal.';
-  const price = deal.pricePerSqFt ? `${formatMoney(deal.pricePerSqFt, deal.currency)} / sq ft` : null;
-  const compare = deal.compareAtPricePerSqFt
-    ? `${formatMoney(deal.compareAtPricePerSqFt, deal.currency)} / sq ft`
-    : null;
-  const link = `${siteUrl}/products/${deal.id}`;
-
-  return `
-    <div style="font-family: Arial, sans-serif; color: #1E1A15; line-height: 1.6;">
-      <h1 style="font-size: 22px; margin-bottom: 12px;">Weekly Sneak Peek</h1>
-      <h2 style="font-size: 18px; margin: 0 0 12px 0;">${title}</h2>
-      ${deal.image ? `<img src="${deal.image}" alt="${deal.name}" style="max-width: 100%; border-radius: 8px; margin-bottom: 16px;" />` : ''}
-      <p style="margin: 0 0 12px 0;">${description}</p>
-      ${price ? `<p style="margin: 0 0 8px 0;"><strong>Deal price:</strong> ${price}</p>` : ''}
-      ${compare ? `<p style="margin: 0 0 16px 0;"><strong>Compare at:</strong> ${compare}</p>` : ''}
-      <a href="${link}" style="display: inline-block; background: #1F1C19; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 999px; font-size: 14px;">
-        View the full preview
-      </a>
-      <p style="margin-top: 20px; font-size: 12px; color: #716553;">
-        You’re receiving this because you subscribed to Victoria Flooring Outlet updates.
-      </p>
-    </div>
-  `;
-}
-
-function stripHtml(html) {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-async function createCampaignV2({
-  apiKey,
-  subject,
-  fromName,
-  fromEmail,
-  html,
-  groupId,
-}) {
-  const baseUrl = process.env.MAILERLITE_API_BASE_URL || 'https://api.mailerlite.com/api/v2';
-  const headers = {
-    'Content-Type': 'application/json',
-    'X-MailerLite-ApiKey': apiKey,
+  return {
+    id: deal.id,
+    name: deal.name || `${deal.brand} ${deal.collection}`,
+    vendor: deal.brand,
+    series: deal.collection,
+    description: deal.description || deal.seriesDescription || '',
+    pricePerSqFt: deal.pricePerSqFt,
+    compareAtPricePerSqFt: deal.compareAtPricePerSqFt,
+    currency: deal.currency || 'CAD',
+    image: deal.image,
+    specs: deal.specs,
+    features: deal.features,
   };
-
-  const campaignResponse = await fetch(`${baseUrl}/campaigns`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      type: 'regular',
-      subject,
-      from_name: fromName,
-      from: fromEmail,
-      ...(groupId ? { groups: [groupId] } : {}),
-    }),
-  });
-
-  if (!campaignResponse.ok) {
-    const errorText = await campaignResponse.text();
-    throw new Error(`MailerLite campaign create error (${campaignResponse.status}): ${errorText}`);
-  }
-
-  const campaign = await campaignResponse.json();
-  const campaignId = campaign?.id;
-  if (!campaignId) {
-    throw new Error('MailerLite campaign create error: missing campaign id');
-  }
-
-  const contentResponse = await fetch(`${baseUrl}/campaigns/${campaignId}/content`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({
-      html,
-      plain: stripHtml(html),
-    }),
-  });
-
-  if (!contentResponse.ok) {
-    const errorText = await contentResponse.text();
-    throw new Error(`MailerLite campaign content error (${contentResponse.status}): ${errorText}`);
-  }
-
-  const sendResponse = await fetch(`${baseUrl}/campaigns/${campaignId}/send`, {
-    method: 'POST',
-    headers,
-  });
-
-  if (!sendResponse.ok) {
-    const errorText = await sendResponse.text();
-    throw new Error(`MailerLite campaign send error (${sendResponse.status}): ${errorText}`);
-  }
-
-  return campaignId;
 }
 
+/**
+ * Check if campaign already sent for this deal
+ */
 async function hasCampaignAlreadySent(weeklyDealId) {
   const result = await query(
-    `SELECT id FROM newsletter_campaigns WHERE weekly_deal_id = $1 LIMIT 1`,
+    `SELECT id FROM newsletter_campaigns 
+     WHERE weekly_deal_id = $1 
+       AND campaign_type = 'weekly_drop' 
+     LIMIT 1`,
     [weeklyDealId]
   );
   return result.rows.length > 0;
 }
 
+/**
+ * Record campaign in database
+ */
 async function recordCampaign({ weeklyDealId, providerCampaignId, subject }) {
   await query(
     `INSERT INTO newsletter_campaigns
-      (weekly_deal_id, provider, provider_campaign_id, subject, status, sent_at)
-     VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-     ON CONFLICT (weekly_deal_id) DO NOTHING`,
-    [weeklyDealId, 'mailerlite', providerCampaignId, subject, 'sent']
+      (weekly_deal_id, provider, provider_campaign_id, subject, campaign_type, target_group, status, sent_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+     ON CONFLICT DO NOTHING`,
+    [weeklyDealId, 'mailerlite', providerCampaignId, subject, 'weekly_drop', 'Subscriber', 'sent']
   );
 }
 
+/**
+ * GET/POST /api/cron/send-weekly-sneak
+ * Cron job to send weekly Deal of the Week email
+ * Should run every Sunday evening (e.g., 8 PM PT)
+ */
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Verify cron secret
   const secret = process.env.CRON_SECRET;
   const provided = getSecretFromRequest(req);
   if (secret && provided !== secret && process.env.NODE_ENV === 'production') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const apiKey = process.env.MAILERLITE_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Missing MailerLite API key' });
+  if (!isMailerLiteConfigured()) {
+    return res.status(500).json({ error: 'MailerLite not configured' });
   }
 
-  const fromName = process.env.MAILERLITE_FROM_NAME || 'Victoria Flooring Outlet';
-  const fromEmail = process.env.MAILERLITE_FROM_EMAIL || 'hello@victoriaflooringoutlet.ca';
-  const siteUrl = (process.env.SITE_URL || 'https://victoriaflooringoutlet.ca').replace(/\/$/, '');
-  const groupId = process.env.MAILERLITE_GROUP_ID || null;
-
   try {
-    const upcomingDeal = await getNextWeeklyDealFromDb();
-    const deal = upcomingDeal || await getWeeklyDealFromDb();
+    // Fetch current and next deals
+    const currentDealRaw = await getWeeklyDealFromDb();
+    const nextDealRaw = await getNextWeeklyDealFromDb();
 
-    if (!deal) {
-      return res.status(200).json({ ok: true, message: 'No weekly deal found.' });
+    if (!currentDealRaw) {
+      return res.status(200).json({ 
+        ok: true, 
+        message: 'No active deal found. Skipping email.' 
+      });
     }
 
-    const weeklyDealId = deal.weeklyDealId || null;
+    const currentDeal = transformDealForEmail(currentDealRaw);
+    const nextDeal = nextDealRaw ? transformDealForEmail(nextDealRaw) : null;
+
+    // Check if already sent for this deal
+    const weeklyDealId = currentDealRaw.weeklyDealId;
     if (weeklyDealId && await hasCampaignAlreadySent(weeklyDealId)) {
-      return res.status(200).json({ ok: true, message: 'Campaign already sent for this deal.' });
+      return res.status(200).json({ 
+        ok: true, 
+        message: `Campaign already sent for deal ${weeklyDealId}` 
+      });
     }
 
-    const subject = `Sneak Peek: ${deal.name}`;
-    const html = buildEmailHtml({ deal, siteUrl });
+    // Build subject line
+    const subject = nextDeal
+      ? `🔥 ${currentDeal.name} is LIVE + Next Week's Preview`
+      : `🔥 Deal of the Week: ${currentDeal.name}`;
 
-    const campaignId = await createCampaignV2({
-      apiKey,
-      subject,
-      fromName,
-      fromEmail,
-      html,
-      groupId,
+    // Generate email HTML using template (with placeholder email for unsubscribe link generation)
+    const htmlTemplate = generateWeeklyDealDropEmail({
+      email: '{$email}', // MailerLite placeholder
+      currentDeal,
+      nextDeal,
     });
 
-    if (weeklyDealId) {
-      await recordCampaign({ weeklyDealId, providerCampaignId: campaignId, subject });
+    const textTemplate = generateWeeklyDealDropEmailText({
+      currentDeal,
+      nextDeal,
+    });
+
+    // Get MailerLite group IDs
+    const groupIds = await getGroupIds();
+    const subscriberGroupId = groupIds?.subscribers;
+
+    if (!subscriberGroupId) {
+      console.warn('MailerLite Subscriber group not found. Campaign will send to all subscribers.');
     }
 
-    return res.status(200).json({ ok: true, campaignId });
+    // Create and send campaign via MailerLite
+    const campaignId = await createAndSendCampaign({
+      subject,
+      html: htmlTemplate,
+      text: textTemplate,
+      groupIds: subscriberGroupId ? [subscriberGroupId] : undefined,
+    });
+
+    // Record campaign in database
+    if (weeklyDealId) {
+      await recordCampaign({
+        weeklyDealId,
+        providerCampaignId: campaignId,
+        subject,
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      campaignId,
+      currentDeal: currentDeal.name,
+      nextDeal: nextDeal?.name || null,
+      message: 'Weekly deal email sent successfully',
+    });
   } catch (error) {
-    console.error('Weekly sneak peek error:', error);
-    return res.status(500).json({ error: 'Failed to send weekly sneak peek', details: error.message });
+    console.error('Weekly deal email error:', error);
+    return res.status(500).json({
+      error: 'Failed to send weekly deal email',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 }

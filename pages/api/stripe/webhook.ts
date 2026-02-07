@@ -4,6 +4,9 @@ import { stripe } from '../../../lib/stripe';
 import Stripe from 'stripe';
 import { createOrder } from '../../../lib/orders';
 import { sendOrderConfirmationEmail, sendOrderNotificationEmail } from '../../../lib/orders/email-notifications';
+import { markAsCustomer, incrementPurchaseCount, isSubscribed, subscribeUser } from '../../../lib/newsletter/subscriber-sync';
+import { markCartAsPurchased, markCartAsPurchasedByEmail } from '../../../lib/abandoned-cart';
+import { query } from '../../../lib/db';
 
 export const config = {
   api: {
@@ -80,6 +83,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         shipping_zone: session.metadata?.shipping_zone || null,
         shipping_address: session.shipping_details?.address || null,
       });
+
+      const customerEmail = session.customer_details?.email;
+
+      // Post-purchase automation (non-blocking)
+      if (customerEmail) {
+        (async () => {
+          try {
+            // 1. Mark abandoned cart as purchased
+            const sessionToken = session.metadata?.session_token;
+            if (sessionToken) {
+              await markCartAsPurchased(sessionToken, session.id);
+            } else {
+              // Fallback: mark by email + stripe session
+              await markCartAsPurchasedByEmail(customerEmail, session.id);
+            }
+
+            // 2. Auto-subscribe customer (implied consent via purchase)
+            const alreadySubscribed = await isSubscribed(customerEmail);
+            if (!alreadySubscribed) {
+              await subscribeUser({
+                email: customerEmail,
+                source: 'checkout',
+                firstName: session.customer_details?.name?.split(' ')[0] || null,
+                consentText: 'Customer provided email at checkout to receive order updates and marketing communications.',
+                metadata: {},
+              });
+              await markAsCustomer(customerEmail, session.amount_total || 0);
+            } else {
+              // Update customer purchase stats
+              await incrementPurchaseCount(customerEmail, session.amount_total || 0);
+            }
+
+            // 3. Schedule post-purchase email (3 days from now)
+            const postPurchaseDate = new Date();
+            postPurchaseDate.setDate(postPurchaseDate.getDate() + 3);
+            await query(
+              `UPDATE orders 
+               SET post_purchase_email_due_at = $1 
+               WHERE stripe_session_id = $2`,
+              [postPurchaseDate, session.id]
+            );
+
+            console.log(`Post-purchase automation completed for ${customerEmail}`);
+          } catch (error: any) {
+            console.error('Post-purchase automation error:', error.message);
+          }
+        })();
+      }
 
       // Send confirmation emails (non-blocking)
       sendOrderConfirmationEmail({ order, session }).catch(err =>

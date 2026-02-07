@@ -1,9 +1,9 @@
 // components/CountdownTimer.js
+// Server-authoritative countdown timer with clock offset compensation
 
 import { useState, useEffect } from 'react';
 
-export function CountdownTimer({ targetDay = 1, className = '' }) {
-  // targetDay: 0 = Sunday, 1 = Monday, etc.
+export function CountdownTimer({ className = '' }) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -11,32 +11,42 @@ export function CountdownTimer({ targetDay = 1, className = '' }) {
     seconds: 0,
   });
   const [mounted, setMounted] = useState(false);
+  const [dealEndsAt, setDealEndsAt] = useState(null);
+  const [clockOffset, setClockOffset] = useState(0);
 
+  // Fetch server time on mount to sync clocks
   useEffect(() => {
     setMounted(true);
+
+    const fetchServerTime = async () => {
+      try {
+        const response = await fetch('/api/deal-timer');
+        const data = await response.json();
+
+        if (data.dealEndsAt) {
+          setDealEndsAt(new Date(data.dealEndsAt));
+          
+          // Calculate offset between client and server time
+          const serverTime = new Date(data.serverTime);
+          const clientTime = new Date();
+          const offset = serverTime.getTime() - clientTime.getTime();
+          setClockOffset(offset);
+        }
+      } catch (error) {
+        console.error('Failed to fetch server time:', error);
+      }
+    };
+
+    fetchServerTime();
   }, []);
 
   useEffect(() => {
+    if (!dealEndsAt) return;
+
     const calculateTimeLeft = () => {
-      const now = new Date();
-
-      // Get the next target day at midnight
-      const nextTarget = new Date(now);
-
-      // Calculate days until next target day
-      const currentDay = now.getDay();
-      let daysUntil = targetDay - currentDay;
-
-      // If we're past the target day this week, or it's the target day but past midnight
-      if (daysUntil < 0 || (daysUntil === 0 && now.getHours() > 0)) {
-        daysUntil += 7;
-      }
-
-      // Set to next target day at midnight
-      nextTarget.setDate(now.getDate() + daysUntil);
-      nextTarget.setHours(0, 0, 0, 0);
-
-      const difference = nextTarget.getTime() - now.getTime();
+      // Use client time adjusted by server offset
+      const now = new Date().getTime() + clockOffset;
+      const difference = dealEndsAt.getTime() - now;
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -59,7 +69,7 @@ export function CountdownTimer({ targetDay = 1, className = '' }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDay]);
+  }, [dealEndsAt, clockOffset]);
 
   const TimeUnit = ({ value, label }) => (
     <div className="flex flex-col items-center" aria-label={`${value} ${label}`}>

@@ -1,13 +1,41 @@
 // components/DealOfTheWeekHero.js
 
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
-import marketingDescriptions from '@/data/vendor_product_marketing.json';
-import { CheckIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { CountdownTimer } from './CountdownTimer';
+import { SubscriberBadge } from './SubscriberBadge';
+import { DealClosedBanner } from './DealClosedBanner';
 
 export function DealOfTheWeekHero({ weeklyDeal }) {
+  const [dealState, setDealState] = useState(null); // { isActive, isSubscriberWindow, dealExpired }
+  const [isSubscriber, setIsSubscriber] = useState(false);
+
+  // Check subscriber status from cookie and deal state
+  useEffect(() => {
+    // Check for subscriber cookie
+    const hasSubscriberCookie = document.cookie.includes('vfo_subscriber=true');
+    setIsSubscriber(hasSubscriberCookie);
+
+    // Fetch deal timing info
+    const fetchDealState = async () => {
+      try {
+        const response = await fetch('/api/deal-timer');
+        const data = await response.json();
+        setDealState({
+          isActive: data.dealActive,
+          isSubscriberWindow: data.isSubscriberWindow,
+          dealExpired: !data.dealActive && data.remainingMs === 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch deal state:', error);
+      }
+    };
+
+    fetchDealState();
+  }, []);
   if (!weeklyDeal) {
     return (
       <section className="bg-white border-b border-vfo-border/30">
@@ -65,10 +93,9 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
   ];
 
   const highlights = weeklyDeal.highlights || defaultHighlights;
-  const marketingData = marketingDescriptions?.[weeklyDeal.slug];
   // Build display name with series + brand when available
-  const baseName = marketingData?.name || weeklyDeal.name?.split(/\s+\d/)?.[0]?.trim() || weeklyDeal.name;
-  const seriesLabel = marketingData?.series || weeklyDeal.collection;
+  const baseName = weeklyDeal.name?.split('–').pop()?.trim() || weeklyDeal.name;
+  const seriesLabel = weeklyDeal.collection;
   const brandLabel = weeklyDeal.brand || 'Harbinger';
   const hasBrandInSeries = seriesLabel?.toLowerCase().includes(brandLabel.toLowerCase());
   const seriesWithBrand = seriesLabel
@@ -85,17 +112,21 @@ export function DealOfTheWeekHero({ weeklyDeal }) {
         <div className="grid md:grid-cols-2 gap-0">
           {/* LEFT: Product info and pricing */}
           <div className="px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-20 flex flex-col justify-center">
-            {/* Urgency label */}
+            {/* Subscriber VIP badge or urgency label */}
             <div className="mb-6">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-vfo-accent/10 text-vfo-accent border border-vfo-accent/20">
-                This Week Only
-              </span>
+              {dealState?.isSubscriberWindow && isSubscriber ? (
+                <SubscriberBadge />
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-vfo-accent/10 text-vfo-accent border border-vfo-accent/20">
+                  This Week Only
+                </span>
+              )}
             </div>
 
             {/* Countdown timer */}
             <div className="mb-6">
               <p className="text-sm text-vfo-grey mb-3 tracking-wide">Deal ends in:</p>
-              <CountdownTimer targetDay={1} />
+              <CountdownTimer />
             </div>
 
             {/* Product heading */}

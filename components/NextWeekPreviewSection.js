@@ -104,29 +104,29 @@ export function NextWeekPreviewSection() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full rounded-full border border-[#D2C5AE] bg-white px-4 py-3 text-sm text-[#1E1A15] placeholder:text-[#B0A28E] focus:outline-none focus:ring-2 focus:ring-[#D8C59A]"
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex items-center justify-center rounded-full bg-[#1F1C19] px-6 py-3 text-sm font-semibold text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Unlocking...' : 'Unlock next week\'s deal'}
-                </button>
-              </form>
+              <>
+                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full rounded-full border border-[#D2C5AE] bg-white px-4 py-3 text-sm text-[#1E1A15] placeholder:text-[#B0A28E] focus:outline-none focus:ring-2 focus:ring-[#D8C59A]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center justify-center rounded-full bg-[#1F1C19] px-6 py-3 text-sm font-semibold text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? 'Unlocking...' : 'Unlock next week\'s deal'}
+                  </button>
+                </form>
+                <p className="mt-2 text-xs text-[#8A7A63]">
+                  We&apos;ll email you the full preview and early access link before it goes live. By subscribing, you agree to receive weekly flooring deals. Unsubscribe anytime.
+                </p>
+              </>
             )}
-
-            <p className="mt-2 text-xs text-[#8A7A63]">
-              We&apos;ll email you the full preview and early access link before it
-              goes live on the site.
-            </p>
           </div>
         </div>
       </div>

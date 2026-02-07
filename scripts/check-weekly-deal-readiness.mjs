@@ -3,14 +3,11 @@
 // Run with: node scripts/check-weekly-deal-readiness.mjs
 
 import pg from 'pg';
-import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
 const { Pool } = pg;
-const marketingData = JSON.parse(fs.readFileSync('./data/vendor_product_marketing.json', 'utf-8'));
-
 function normalizeSeriesForSlug(series) {
   if (!series) return '';
   return series.replace(/\s+series$/i, '').trim();
@@ -54,6 +51,7 @@ async function main() {
         vp.series,
         vp.vendor,
         vp.description,
+        vp.series_description,
         (SELECT COUNT(*) FROM vendor_product_images WHERE vendor_product_id = vp.id) as image_count,
         (SELECT url FROM vendor_product_images WHERE vendor_product_id = vp.id ORDER BY is_primary DESC, sort_order LIMIT 1) as primary_image
       FROM vendor_products vp
@@ -68,7 +66,7 @@ async function main() {
 
     products.rows.forEach(row => {
       const slug = slugify(row.vendor + '-' + normalizeSeriesForSlug(row.series) + '-' + row.name);
-      const hasMarketing = marketingData[slug] !== undefined;
+      const hasMarketing = Boolean(row.description || row.series_description);
       const imageCount = parseInt(row.image_count);
       const hasBadImage = row.primary_image && (
         row.primary_image.includes('blur_') ||

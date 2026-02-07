@@ -43,7 +43,7 @@ const Header = () => {
         {/* Main header */}
         <div className="flex items-center justify-between h-20 md:h-24 lg:h-28 xl:h-32">
           {/* Logo - Left aligned */}
-          <div className="flex items-center flex-1 -mt-1">
+          <div className="flex items-center mt-1">
             <Logo />
           </div>
 

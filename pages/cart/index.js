@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Head from 'next/head';
@@ -7,7 +7,9 @@ import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
 import { calculateShipping } from '@/lib/shipping';
+import { trackEcommerce } from '@/lib/analytics';
 import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
+import CheckoutEmailCapture from '@/components/CheckoutEmailCapture';
 import {
   XCircleIcon,
   XMarkIcon as XIcon,
@@ -22,6 +24,11 @@ const Cart = () => {
   const [postalCode, setPostalCode] = useState('');
   const [shippingResult, setShippingResult] = useState(null);
   const [shippingNotice, setShippingNotice] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailCaptured, setEmailCaptured] = useState(false);
+  const [sessionToken, setSessionToken] = useState(null);
+  const viewCartTrackedRef = useRef(false);
+  const shippingInfoTrackedRef = useRef('');
 
   const adhesiveIds = [
     'uzin_ke_2000_s',
@@ -38,6 +45,21 @@ const Cart = () => {
   const totalFlooringSqFt = Object.values(cartDetails || {})
     .filter(item => item.pricePerSqFt)
     .reduce((sum, item) => sum + item.quantity, 0);
+
+  const cartItemsForTracking = useMemo(() => {
+    return Object.values(cartDetails || {}).map((item) => {
+      const itemPrice = item.pricePerSqFt ? item.pricePerSqFt : (item.price || 0) / 100;
+      return {
+        item_id: item.id,
+        item_name: item.name,
+        item_brand: item.brand || 'Victoria Flooring Outlet',
+        item_category: item.type || item.collection || 'Flooring',
+        item_variant: item.collection || item.series || undefined,
+        price: Number(itemPrice.toFixed(2)),
+        quantity: item.quantity || 1,
+      };
+    });
+  }, [cartDetails]);
 
   // Calculate actual item count (boxes for flooring, units for accessories)
   const cartItemCount = Object.values(cartDetails || {}).reduce((count, item) => {
@@ -66,6 +88,32 @@ const Cart = () => {
     }
   }, [postalCode, cartDetails, cartCount]);
 
+  useEffect(() => {
+    if (cartCount > 0 && !viewCartTrackedRef.current) {
+      trackEcommerce('view_cart', {
+        currency: 'CAD',
+        value: Number((totalPrice / 100).toFixed(2)),
+        items: cartItemsForTracking,
+      });
+      viewCartTrackedRef.current = true;
+    }
+  }, [cartCount, totalPrice, cartItemsForTracking]);
+
+  useEffect(() => {
+    if (!shippingResult?.valid || cartCount === 0) return;
+    const shippingKey = `${postalCode}-${shippingResult.shipping}-${cartCount}`;
+    if (shippingInfoTrackedRef.current === shippingKey) return;
+
+    trackEcommerce('add_shipping_info', {
+      currency: 'CAD',
+      value: Number(((totalPrice + shippingResult.shipping) / 100).toFixed(2)),
+      shipping: Number((shippingResult.shipping / 100).toFixed(2)),
+      shipping_tier: shippingResult.zone || undefined,
+      items: cartItemsForTracking,
+    });
+    shippingInfoTrackedRef.current = shippingKey;
+  }, [shippingResult, postalCode, cartCount, totalPrice, cartItemsForTracking]);
+
   const handlePostalCodeChange = (e) => {
     const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     // Auto-format as user types (A1A1A1 -> A1A 1A1)
@@ -79,13 +127,28 @@ const Cart = () => {
     }
   };
 
+  const handleEmailCaptured = (capturedEmail, token) => {
+    setEmail(capturedEmail);
+    setSessionToken(token);
+    setEmailCaptured(true);
+  };
+
   const redirectToCheckout = async () => {
     if (!shippingResult?.valid) {
       setShippingNotice(true);
       return;
     }
+    if (!emailCaptured) {
+      setShippingNotice(true);
+      return;
+    }
     setRedirecting(true);
     try {
+      trackEcommerce('begin_checkout', {
+        currency: 'CAD',
+        value: Number((grandTotal / 100).toFixed(2)),
+        items: cartItemsForTracking,
+      });
       // Create Stripe checkout
       const {
         data: { id },
@@ -119,6 +182,7 @@ const Cart = () => {
         shipping: shippingResult?.shipping || 0,
         postalCode: postalCode || '',
         shippingZone: shippingResult?.zone || '',
+        sessionToken: sessionToken, // Include session token for abandoned cart tracking
       });
 
       // Redirect to checkout
@@ -355,8 +419,8 @@ const Cart = () => {
               )}
             </div>
 
-            <div className="flex flex-col items-end border-t py-4 mt-8">
-              <div className="space-y-2 text-right">
+            <div className="border-t py-4 mt-8">
+              <div className="space-y-2 text-right mb-6">
                 <p className="text-lg">
                   Subtotal:{' '}
                   <span className="font-medium">
@@ -379,22 +443,47 @@ const Cart = () => {
                 </p>
               </div>
 
-              <button
-                onClick={redirectToCheckout}
-                disabled={redirecting || !shippingResult?.valid}
-                className="border rounded py-2 px-6 bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 focus:ring-4 focus:ring-opacity-50 focus:ring-emerald-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 max-w-max mt-4"
-              >
-                {redirecting ? 'Redirecting...' : 'Go to Checkout'}
-              </button>
+              {/* Email capture for abandoned cart tracking */}
+              {shippingResult?.valid && !emailCaptured && (
+                <CheckoutEmailCapture
+                  onEmailCaptured={handleEmailCaptured}
+                  cartItems={Object.values(cartDetails).map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
+                    sqft: item.pricePerSqFt ? item.quantity : null,
+                  }))}
+                  cartTotal={Math.round(grandTotal * 100)}
+                  dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
+                  dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
+                  postalCode={postalCode}
+                  shippingZone={shippingResult?.zone}
+                />
+              )}
+
+              {/* Checkout button (only visible after email captured) */}
+              {emailCaptured && (
+                <div className="flex flex-col items-end">
+                  <button
+                    onClick={redirectToCheckout}
+                    disabled={redirecting}
+                    className="border rounded py-2 px-6 bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 focus:ring-4 focus:ring-opacity-50 focus:ring-emerald-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 max-w-max"
+                  >
+                    {redirecting ? 'Redirecting...' : 'Go to Checkout'}
+                  </button>
+                </div>
+              )}
+
+              {/* Validation messages */}
               {!shippingResult?.valid && (postalCode || shippingNotice) && (
-                <p className="mt-2 text-sm text-red-600">
+                <p className="mt-2 text-sm text-red-600 text-right">
                   {postalCode
                     ? 'Please enter a valid Canadian postal code'
                     : 'Please calculate shipping before proceeding to checkout'}
                 </p>
               )}
               {!shippingResult?.valid && !postalCode && !shippingNotice && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-600 text-right">
                   Please calculate shipping to enable checkout.
                 </p>
               )}

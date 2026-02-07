@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/router';
 import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
-import marketingDescriptions from '@/data/vendor_product_marketing.json';
 
 export function HomeHero({ weeklyDeal, onOrderDeal }) {
   const router = useRouter();
@@ -32,9 +31,8 @@ export function HomeHero({ weeklyDeal, onOrderDeal }) {
     : 0;
 
   // Build display name with series + brand when available
-  const marketingData = marketingDescriptions?.[weeklyDeal.slug];
-  const baseName = marketingData?.name || weeklyDeal.name?.split(/\s+\d/)?.[0]?.trim() || weeklyDeal.name;
-  const seriesLabel = marketingData?.series || weeklyDeal.collection;
+  const baseName = weeklyDeal.name?.split('–').pop()?.trim() || weeklyDeal.name;
+  const seriesLabel = weeklyDeal.collection;
   const brandLabel = weeklyDeal.brand || 'Harbinger';
   const hasBrandInSeries = seriesLabel?.toLowerCase().includes(brandLabel.toLowerCase());
   const seriesWithBrand = seriesLabel

@@ -1,50 +1,23 @@
-import {
-  isNewsletterDbConfigured,
-  updateSubscriberError,
-  upsertSubscriber
-} from '@/lib/newsletter/db-newsletter';
+import { subscribeUser } from '@/lib/newsletter/subscriber-sync';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function addToMailerLite({ email, source }) {
-  const apiKey = process.env.MAILERLITE_API_KEY;
-  if (!apiKey) return null;
-
-  const groupId = process.env.MAILERLITE_GROUP_ID;
-
-  // Use the new MailerLite API (connect.mailerlite.com) with Bearer auth
-  const url = 'https://connect.mailerlite.com/api/subscribers';
-
-  const body = {
-    email,
-    status: 'active',
-    ...(source ? { fields: { source } } : {}),
-    ...(groupId ? { groups: [groupId] } : {})
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`MailerLite error (${response.status}): ${errorText}`);
-  }
-
-  return response.json();
-}
-
+/**
+ * POST /api/subscribe
+ * Subscribe a user to the newsletter with CASL consent tracking
+ * 
+ * Body:
+ * - email (required): Email address
+ * - source (required): Consent source (e.g., 'subscribe_form', 'next_week_preview')
+ * - firstName (optional): First name
+ * - consentText (optional): Exact consent wording shown to user
+ */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, source } = req.body || {};
+  const { email, source, firstName, consentText } = req.body || {};
 
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email is required' });
@@ -54,55 +27,51 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid email format' });
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
-  const normalizedSource = typeof source === 'string'
-    ? source.trim().slice(0, 100)
-    : null;
-  const provider = process.env.MAILERLITE_API_KEY ? 'mailerlite' : 'internal';
+  if (!source || typeof source !== 'string') {
+    return res.status(400).json({ error: 'Consent source is required' });
+  }
 
-  if (!process.env.MAILERLITE_API_KEY && !isNewsletterDbConfigured()) {
+  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedSource = source.trim().slice(0, 100);
+  const normalizedFirstName = firstName && typeof firstName === 'string' 
+    ? firstName.trim().slice(0, 100) 
+    : null;
+
+  // Extract metadata for CASL compliance
+  const metadata = {
+    ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+        req.headers['x-real-ip'] || 
+        req.socket.remoteAddress,
+    userAgent: req.headers['user-agent'],
+    pageUrl: req.headers.referer || req.headers.referrer,
+  };
+
+  try {
+    const subscriber = await subscribeUser({
+      email: normalizedEmail,
+      source: normalizedSource,
+      firstName: normalizedFirstName,
+      consentText: consentText || 'I agree to receive weekly flooring deals and updates from Victoria Flooring Outlet.',
+      metadata,
+    });
+
+    // Set subscriber cookie for hard-gate early access
+    res.setHeader('Set-Cookie', `vfo_subscriber=true; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}`);
+
+    return res.status(200).json({
+      message: 'Successfully subscribed! Check your inbox for a welcome email.',
+      subscribed: true,
+      subscriber: {
+        email: subscriber.email,
+        status: subscriber.status,
+      },
+    });
+  } catch (error) {
+    console.error('Subscription error:', error);
     return res.status(500).json({
-      error: 'Newsletter service is not configured'
+      error: 'Unable to complete subscription. Please try again later.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
-
-  // Try to save to database, but don't block if MailerLite is available
-  if (isNewsletterDbConfigured()) {
-    try {
-      await upsertSubscriber({
-        email: normalizedEmail,
-        source: normalizedSource,
-        provider
-      });
-    } catch (error) {
-      console.error('Newsletter database error:', error);
-      // Only fail if MailerLite is not configured as a fallback
-      if (!process.env.MAILERLITE_API_KEY) {
-        return res.status(500).json({
-          error: 'Unable to save subscription. Please try again later.'
-        });
-      }
-      // Otherwise, log and continue to MailerLite
-    }
-  }
-
-  if (process.env.MAILERLITE_API_KEY) {
-    try {
-      await addToMailerLite({ email: normalizedEmail, source: normalizedSource });
-    } catch (error) {
-      console.error('MailerLite subscription error:', error);
-      if (isNewsletterDbConfigured()) {
-        await updateSubscriberError(normalizedEmail, error.message);
-      }
-      return res.status(502).json({
-        error: 'Unable to subscribe at the moment. Please try again later.'
-      });
-    }
-  }
-
-  return res.status(200).json({
-    message: 'Successfully subscribed',
-    subscribed: true
-  });
 }
 
