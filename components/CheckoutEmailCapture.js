@@ -51,7 +51,7 @@ const CheckoutEmailCapture = ({
       if (response.ok) {
         setCaptured(true);
         onEmailCaptured(email, data.sessionToken);
-        toast.success('Email saved! Proceeding to checkout...');
+        toast.success('Email saved! You can now proceed to checkout.');
         event({
           action: 'generate_lead',
           category: 'checkout',
@@ -73,9 +73,12 @@ const CheckoutEmailCapture = ({
 
   if (captured) {
     return (
-      <div className="bg-vfo-sand border border-vfo-border rounded-sm p-4 mb-4" role="status">
-        <p className="text-vfo-charcoal text-sm">
+      <div className="bg-green-50 border border-green-200 rounded-sm p-4 mb-4" role="status">
+        <p className="text-green-800 text-sm">
           ✓ Email saved: <strong>{email}</strong>
+        </p>
+        <p className="text-green-700 text-xs mt-1">
+          Click "Go to Checkout" below to complete your order
         </p>
       </div>
     );
