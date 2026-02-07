@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
@@ -10,6 +10,7 @@ import { formatCurrency, upgradeWixImageUrl } from '@/lib/utils';
 import { getUpsellProducts, calculateAccessoryQuantity } from '@/lib/products';
 import { getVendorProductById } from '@/lib/harbinger/sync';
 import { getWeeklyDeal } from '@/lib/products-server';
+import { trackEcommerce } from '@/lib/analytics';
 import SquareFootageCalculator from '@/components/SquareFootageCalculator';
 import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 
@@ -278,6 +279,7 @@ const SERIES_FALLBACK = {
 const Product = props => {
   const router = useRouter();
   const { cartCount, addItem } = useShoppingCart();
+  const viewTrackedRef = useRef(false);
   const [sqFt, setSqFt] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
@@ -514,7 +516,54 @@ const Product = props => {
     ? Math.round(((compareAtPricePerSqFt - pricePerSqFt) / compareAtPricePerSqFt) * 100)
     : 0;
 
+  const buildItemPayload = (product, itemQuantity = 1) => {
+    const itemPrice = product.pricePerSqFt
+      ? product.pricePerSqFt
+      : (product.price || 0) / 100;
+
+    return {
+      item_id: product.id,
+      item_name: product.name,
+      item_brand: product.brand || 'Victoria Flooring Outlet',
+      item_category: product.type || product.collection || 'Flooring',
+      item_variant: product.collection || product.series || undefined,
+      price: Number(itemPrice.toFixed(2)),
+      quantity: itemQuantity,
+    };
+  };
+
+  useEffect(() => {
+    if (router.isFallback || !props?.id || !props?.name) return;
+    if (viewTrackedRef.current) return;
+
+    const item = buildItemPayload(props, 1);
+    trackEcommerce('view_item', {
+      currency: 'CAD',
+      value: item.price,
+      items: [item],
+    });
+    viewTrackedRef.current = true;
+  }, [
+    router.isFallback,
+    props?.id,
+    props?.name,
+    props?.pricePerSqFt,
+    props?.price,
+    props?.collection,
+    props?.series,
+  ]);
+
   const handleOnAddToCart = () => {
+    const itemQuantity = isAccessory ? quantity : sqFt;
+    if (itemQuantity > 0) {
+      const item = buildItemPayload(props, itemQuantity);
+      trackEcommerce('add_to_cart', {
+        currency: 'CAD',
+        value: Number((item.price * itemQuantity).toFixed(2)),
+        items: [item],
+      });
+    }
+
     if (isAccessory) {
       addItem(props, quantity);
     } else {
@@ -538,6 +587,15 @@ const Product = props => {
     addItem(upsellProduct, quantityToAdd);
     setShowGoToCart(true);
     toast.success(`${quantityToAdd} ${upsellProduct.name} added to cart`);
+
+    if (quantityToAdd > 0) {
+      const item = buildItemPayload(upsellProduct, quantityToAdd);
+      trackEcommerce('add_to_cart', {
+        currency: 'CAD',
+        value: Number((item.price * quantityToAdd).toFixed(2)),
+        items: [item],
+      });
+    }
   };
 
 

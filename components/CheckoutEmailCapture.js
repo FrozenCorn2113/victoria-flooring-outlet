@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { event } from '@/lib/analytics';
 
 const CheckoutEmailCapture = ({ 
   onEmailCaptured, 
@@ -51,6 +52,14 @@ const CheckoutEmailCapture = ({
         setCaptured(true);
         onEmailCaptured(email, data.sessionToken);
         toast.success('Email saved! Proceeding to checkout...');
+        event({
+          action: 'generate_lead',
+          category: 'checkout',
+          label: 'email_capture',
+          value: Number(((cartTotal || 0) / 100).toFixed(2)),
+          method: 'email',
+          currency: 'CAD',
+        });
       } else {
         toast.error(data.error || 'Something went wrong. Please try again.');
       }

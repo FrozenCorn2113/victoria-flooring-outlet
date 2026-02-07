@@ -9,6 +9,7 @@ import { Header, Footer } from '@/components/index';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { NetworkStatus } from '@/components/NetworkStatus';
+import { event, pageview } from '@/lib/analytics';
 
 // Dynamic import for FloatingTyWidget to reduce initial bundle size
 const FloatingTyWidget = dynamic(
@@ -50,6 +51,55 @@ function MyApp({ Component, pageProps }) {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
   }, [router.events]);
+
+  useEffect(() => {
+    const handleRouteChange = (url) => {
+      pageview(url);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
+
+  useEffect(() => {
+    const handleContactClick = (clickEvent) => {
+      if (!clickEvent?.target) return;
+      const anchor = clickEvent.target.closest?.('a');
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href') || '';
+      const lowerHref = href.toLowerCase();
+      if (lowerHref.startsWith('tel:')) {
+        event({
+          action: 'contact_click',
+          category: 'engagement',
+          label: href,
+          method: 'phone',
+        });
+      } else if (lowerHref.startsWith('sms:')) {
+        event({
+          action: 'contact_click',
+          category: 'engagement',
+          label: href,
+          method: 'sms',
+        });
+      } else if (lowerHref.startsWith('mailto:')) {
+        event({
+          action: 'contact_click',
+          category: 'engagement',
+          label: href,
+          method: 'email',
+        });
+      }
+    };
+
+    document.addEventListener('click', handleContactClick);
+    return () => {
+      document.removeEventListener('click', handleContactClick);
+    };
+  }, []);
   return (
     <>
       <Head>

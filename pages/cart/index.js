@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Head from 'next/head';
@@ -7,6 +7,7 @@ import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
 import { calculateShipping } from '@/lib/shipping';
+import { trackEcommerce } from '@/lib/analytics';
 import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 import CheckoutEmailCapture from '@/components/CheckoutEmailCapture';
 import {
@@ -26,6 +27,8 @@ const Cart = () => {
   const [email, setEmail] = useState('');
   const [emailCaptured, setEmailCaptured] = useState(false);
   const [sessionToken, setSessionToken] = useState(null);
+  const viewCartTrackedRef = useRef(false);
+  const shippingInfoTrackedRef = useRef('');
 
   const adhesiveIds = [
     'uzin_ke_2000_s',
@@ -42,6 +45,21 @@ const Cart = () => {
   const totalFlooringSqFt = Object.values(cartDetails || {})
     .filter(item => item.pricePerSqFt)
     .reduce((sum, item) => sum + item.quantity, 0);
+
+  const cartItemsForTracking = useMemo(() => {
+    return Object.values(cartDetails || {}).map((item) => {
+      const itemPrice = item.pricePerSqFt ? item.pricePerSqFt : (item.price || 0) / 100;
+      return {
+        item_id: item.id,
+        item_name: item.name,
+        item_brand: item.brand || 'Victoria Flooring Outlet',
+        item_category: item.type || item.collection || 'Flooring',
+        item_variant: item.collection || item.series || undefined,
+        price: Number(itemPrice.toFixed(2)),
+        quantity: item.quantity || 1,
+      };
+    });
+  }, [cartDetails]);
 
   // Calculate actual item count (boxes for flooring, units for accessories)
   const cartItemCount = Object.values(cartDetails || {}).reduce((count, item) => {
@@ -69,6 +87,32 @@ const Cart = () => {
       setShippingResult(null);
     }
   }, [postalCode, cartDetails, cartCount]);
+
+  useEffect(() => {
+    if (cartCount > 0 && !viewCartTrackedRef.current) {
+      trackEcommerce('view_cart', {
+        currency: 'CAD',
+        value: Number((totalPrice / 100).toFixed(2)),
+        items: cartItemsForTracking,
+      });
+      viewCartTrackedRef.current = true;
+    }
+  }, [cartCount, totalPrice, cartItemsForTracking]);
+
+  useEffect(() => {
+    if (!shippingResult?.valid || cartCount === 0) return;
+    const shippingKey = `${postalCode}-${shippingResult.shipping}-${cartCount}`;
+    if (shippingInfoTrackedRef.current === shippingKey) return;
+
+    trackEcommerce('add_shipping_info', {
+      currency: 'CAD',
+      value: Number(((totalPrice + shippingResult.shipping) / 100).toFixed(2)),
+      shipping: Number((shippingResult.shipping / 100).toFixed(2)),
+      shipping_tier: shippingResult.zone || undefined,
+      items: cartItemsForTracking,
+    });
+    shippingInfoTrackedRef.current = shippingKey;
+  }, [shippingResult, postalCode, cartCount, totalPrice, cartItemsForTracking]);
 
   const handlePostalCodeChange = (e) => {
     const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -100,6 +144,11 @@ const Cart = () => {
     }
     setRedirecting(true);
     try {
+      trackEcommerce('begin_checkout', {
+        currency: 'CAD',
+        value: Number((grandTotal / 100).toFixed(2)),
+        items: cartItemsForTracking,
+      });
       // Create Stripe checkout
       const {
         data: { id },
