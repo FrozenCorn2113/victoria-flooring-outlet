@@ -9,7 +9,6 @@ import { Header, Footer } from '@/components/index';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { NetworkStatus } from '@/components/NetworkStatus';
-import { GA_MEASUREMENT_ID, event, pageview } from '@/lib/analytics';
 
 // Dynamic import for FloatingTyWidget to reduce initial bundle size
 const FloatingTyWidget = dynamic(
@@ -19,6 +18,7 @@ const FloatingTyWidget = dynamic(
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
+  const gaMeasurementId = 'G-3SH7W4SG49';
 
   // Show FloatingTyWidget everywhere except checkout pages
   const showTyWidget = !router.pathname.startsWith('/checkout');
@@ -50,65 +50,6 @@ function MyApp({ Component, pageProps }) {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
   }, [router.events]);
-
-  useEffect(() => {
-    const handleRouteChange = (url) => {
-      pageview(url);
-    };
-
-    router.events.on('routeChangeComplete', handleRouteChange);
-    return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
-    };
-  }, [router.events]);
-
-  useEffect(() => {
-    const handleContactClick = (clickEvent) => {
-      if (!clickEvent?.target) return;
-      const anchor = clickEvent.target.closest?.('a');
-      if (!anchor) return;
-
-      const href = anchor.getAttribute('href') || '';
-      const lowerHref = href.toLowerCase();
-      if (lowerHref.startsWith('tel:')) {
-        event({
-          action: 'contact_click',
-          category: 'engagement',
-          label: href,
-          method: 'phone',
-        });
-      } else if (lowerHref.startsWith('sms:')) {
-        event({
-          action: 'contact_click',
-          category: 'engagement',
-          label: href,
-          method: 'sms',
-        });
-      } else if (lowerHref.startsWith('mailto:')) {
-        event({
-          action: 'contact_click',
-          category: 'engagement',
-          label: href,
-          method: 'email',
-        });
-      }
-    };
-
-    document.addEventListener('click', handleContactClick);
-    return () => {
-      document.removeEventListener('click', handleContactClick);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.location.search.includes('ga_debug=1')) return;
-    event({
-      action: 'debug_event',
-      category: 'debug',
-      label: window.location.pathname,
-    });
-  }, []);
   return (
     <>
       <Head>
@@ -163,29 +104,23 @@ function MyApp({ Component, pageProps }) {
           }
         `}</style>
       </Head>
-      {/* Google Analytics */}
-      {GA_MEASUREMENT_ID && (
-        <>
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          />
-          <Script
-            id="gtag-init"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GA_MEASUREMENT_ID}', {
-                  page_path: window.location.pathname,
-                });
-              `,
-            }}
-          />
-        </>
-      )}
+      {/* Google tag (gtag.js) */}
+      <Script
+        strategy="afterInteractive"
+        src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+      />
+      <Script
+        id="gtag-init"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${gaMeasurementId}');
+          `,
+        }}
+      />
       <ErrorBoundary>
         <CartProvider>
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-vfo-charcoal focus:text-white focus:rounded-sm">

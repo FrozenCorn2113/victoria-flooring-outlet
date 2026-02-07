@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
-import { event } from '@/lib/analytics';
 
 const EmailSubscription = ({ source = 'general_email_subscription' }) => {
   const [email, setEmail] = useState('');
@@ -42,12 +41,6 @@ const EmailSubscription = ({ source = 'general_email_subscription' }) => {
         setSubmitted(true);
         setEmail('');
         toast.success('Successfully subscribed! You\'ll receive next week\'s deal.');
-        event({
-          action: 'sign_up',
-          category: 'newsletter',
-          label: source,
-          method: 'email',
-        });
       } else {
         const errorMsg = data.error || 'Something went wrong. Please try again.';
         setError(errorMsg);

@@ -1,10 +1,9 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { TruckIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
-import { trackEcommerce } from '@/lib/analytics';
 
 interface OrderItem {
   name: string;
@@ -55,7 +54,6 @@ export default function CheckoutSuccess() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const purchaseTrackedRef = useRef(false);
 
   useEffect(() => {
     if (session_id && typeof session_id === 'string') {
@@ -86,25 +84,6 @@ export default function CheckoutSuccess() {
     }
   }, [session_id, router.isReady]);
 
-  useEffect(() => {
-    if (!order || purchaseTrackedRef.current) return;
-
-    const items = order.items.map((item) => ({
-      item_id: item.name,
-      item_name: item.name,
-      price: Number((item.unit_price / 100).toFixed(2)),
-      quantity: item.quantity,
-    }));
-
-    trackEcommerce('purchase', {
-      transaction_id: String(order.id),
-      currency: 'CAD',
-      value: Number((order.total / 100).toFixed(2)),
-      shipping: Number((order.shipping / 100).toFixed(2)),
-      items,
-    });
-    purchaseTrackedRef.current = true;
-  }, [order]);
 
   return (
     <>
