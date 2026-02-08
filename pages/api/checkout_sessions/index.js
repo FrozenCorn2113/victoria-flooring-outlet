@@ -107,10 +107,15 @@ export default async function handler(req, res) {
           });
         }
 
-        const serverPriceCents = Math.round(
-          (weeklyDeal.pricePerSqFt || weeklyDeal.price_per_sqft) * 100
-        );
+        const serverPricePerSqFt = weeklyDeal.pricePerSqFt || weeklyDeal.price_per_sqft;
+        const coveragePerBox = weeklyDeal.coverageSqFtPerBox || weeklyDeal.coverage_sqft_per_box || 48;
+        
+        // Calculate boxes and price per box for clearer Stripe display
+        const sqftOrdered = clientQuantity; // clientQuantity is square footage
+        const boxesNeeded = Math.ceil(sqftOrdered / coveragePerBox);
+        const pricePerBoxCents = Math.round(serverPricePerSqFt * coveragePerBox * 100);
 
+        const serverPriceCents = Math.round(serverPricePerSqFt * 100);
         if (clientUnitAmount !== serverPriceCents) {
           console.warn(
             `Price mismatch for "${clientName}": client=${clientUnitAmount}, server=${serverPriceCents}`
@@ -120,10 +125,13 @@ export default async function handler(req, res) {
         validatedLineItems.push({
           price_data: {
             currency: 'cad',
-            product_data: { name: clientName },
-            unit_amount: serverPriceCents,
+            product_data: { 
+              name: `${clientName} (${coveragePerBox} sq ft/box)`,
+              description: `${sqftOrdered} sq ft total`,
+            },
+            unit_amount: pricePerBoxCents,
           },
-          quantity: clientQuantity,
+          quantity: boxesNeeded,
         });
       } else {
         // No weekly deal and not a known accessory
