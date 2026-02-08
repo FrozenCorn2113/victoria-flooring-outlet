@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import { formatCurrency } from '@/lib/utils';
 import products from '../products';
 
@@ -69,8 +68,6 @@ const AdhesiveSelectionCard = ({
   sqFt,
   quantity,
   onQuantityChange,
-  onAddToCart,
-  isAdding,
 }) => {
   const bestFor = adhesive?.bestFor?.length ? adhesive.bestFor.join(', ') : null;
   const coverageText =
@@ -180,26 +177,6 @@ const AdhesiveSelectionCard = ({
             </div>
           </div>
 
-          <button
-            onClick={(e) => { e.stopPropagation(); onAddToCart(adhesive, quantity); }}
-            disabled={isAdding}
-            className={`w-full mt-3 py-2.5 font-semibold rounded-lg transition-colors ${
-              isAdding
-                ? 'bg-teal-600 text-white'
-                : 'bg-vfo-accent hover:bg-teal-600 text-white'
-            }`}
-          >
-            {isAdding ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Added to Cart!
-              </span>
-            ) : (
-              'Add to Cart'
-            )}
-          </button>
         </div>
       )}
     </div>
@@ -263,15 +240,13 @@ const TransitionInput = ({
   );
 };
 
-export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
-  const { addItem } = useShoppingCart();
+const ProjectAccessoriesCalculator = forwardRef(function ProjectAccessoriesCalculator({ sqFt = 0 }, ref) {
   const [activeTab, setActiveTab] = useState('adhesive');
   const [selectedNosing, setSelectedNosing] = useState('flush');
 
   // Adhesive selection state - null means no selection yet
   const [selectedAdhesiveKey, setSelectedAdhesiveKey] = useState(null);
   const [adhesiveQuantity, setAdhesiveQuantity] = useState(1);
-  const [isAddingAdhesive, setIsAddingAdhesive] = useState(false);
 
   // When adhesive is selected, pre-fill recommended quantity based on sqFt
   const handleAdhesiveSelect = (key) => {
@@ -281,18 +256,6 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
       ? Math.ceil(sqFt / (adhesive?.coverage?.sqFtPerUnit || 150))
       : 1;
     setAdhesiveQuantity(recommended);
-    setIsAddingAdhesive(false);
-  };
-
-  const handleAddAdhesiveToCart = (adhesive, units) => {
-    if (units > 0 && adhesive) {
-      addItem(adhesive, units);
-      setIsAddingAdhesive(true);
-      // Show feedback, keep selection open
-      setTimeout(() => {
-        setIsAddingAdhesive(false);
-      }, 2000);
-    }
   };
 
   // Transition quantities
@@ -309,23 +272,18 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
   const nosingTotal = nosingQty * nosingPrice;
   const transitionsTotal = tMouldingTotal + reducerTotal + nosingTotal;
 
-  const [isAddingTransitions, setIsAddingTransitions] = useState(false);
-
-  const handleAddTransitionsToCart = () => {
-    if (tMouldingQty > 0 && TRANSITIONS.tMoulding) {
-      addItem(TRANSITIONS.tMoulding, tMouldingQty);
-    }
-    if (reducerQty > 0 && TRANSITIONS.reducer) {
-      addItem(TRANSITIONS.reducer, reducerQty);
-    }
-    if (nosingQty > 0 && nosingProduct) {
-      addItem(nosingProduct, nosingQty);
-    }
-    setIsAddingTransitions(true);
-    setTimeout(() => {
-      setIsAddingTransitions(false);
-    }, 2000);
-  };
+  useImperativeHandle(ref, () => ({
+    getSelectedAccessories: () => ({
+      adhesive: selectedAdhesiveKey
+        ? { product: ADHESIVES[selectedAdhesiveKey], quantity: adhesiveQuantity }
+        : null,
+      transitions: {
+        tMoulding: { product: TRANSITIONS.tMoulding, quantity: tMouldingQty },
+        reducer: { product: TRANSITIONS.reducer, quantity: reducerQty },
+        nosing: { product: nosingProduct, quantity: nosingQty },
+      },
+    }),
+  }), [selectedAdhesiveKey, adhesiveQuantity, tMouldingQty, reducerQty, nosingQty, nosingProduct]);
 
   return (
     <div className="bg-vfo-bg rounded-xl border border-vfo-muted/20 overflow-hidden">
@@ -390,11 +348,13 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
                   sqFt={sqFt}
                   quantity={selectedAdhesiveKey === key ? adhesiveQuantity : 1}
                   onQuantityChange={setAdhesiveQuantity}
-                  onAddToCart={handleAddAdhesiveToCart}
-                  isAdding={selectedAdhesiveKey === key && isAddingAdhesive}
                 />
               ))}
             </div>
+
+            <p className="text-xs text-vfo-muted mt-4">
+              Selected accessories will be added automatically when you proceed to checkout.
+            </p>
 
             {sqFt === 0 && (
               <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
@@ -566,28 +526,12 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
                     <span className="text-xl font-bold text-vfo-slate">{formatCurrency(transitionsTotal)}</span>
                   </div>
                 </div>
-                <button
-                  onClick={handleAddTransitionsToCart}
-                  disabled={isAddingTransitions}
-                  className={`w-full py-2.5 font-medium rounded-lg transition-colors ${
-                    isAddingTransitions
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-vfo-accent hover:bg-teal-600 text-white'
-                  }`}
-                >
-                  {isAddingTransitions ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Added to Cart!
-                    </span>
-                  ) : (
-                    'Add Transitions to Cart'
-                  )}
-                </button>
               </div>
             )}
+
+            <p className="text-xs text-vfo-muted mt-4">
+              Selected accessories will be added automatically when you proceed to checkout.
+            </p>
 
             <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
               <p className="text-xs text-blue-800">
@@ -614,4 +558,6 @@ export default function ProjectAccessoriesCalculator({ sqFt = 0 }) {
       </div>
     </div>
   );
-}
+});
+
+export default ProjectAccessoriesCalculator;

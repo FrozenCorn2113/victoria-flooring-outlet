@@ -8,6 +8,7 @@ import { event } from '@/lib/analytics';
 
 const CheckoutEmailCapture = ({ 
   onCheckout, // Function to call after email is captured
+  getCartSnapshot,
   cartItems, 
   cartTotal, 
   dealId, 
@@ -27,6 +28,14 @@ const CheckoutEmailCapture = ({
     setProcessing(true);
 
     try {
+      const snapshot = typeof getCartSnapshot === 'function'
+        ? getCartSnapshot()
+        : { cartItems, cartTotal, dealId, dealEndsAt };
+      const resolvedCartItems = snapshot.cartItems || cartItems;
+      const resolvedCartTotal = snapshot.cartTotal ?? cartTotal;
+      const resolvedDealId = snapshot.dealId ?? dealId;
+      const resolvedDealEndsAt = snapshot.dealEndsAt ?? dealEndsAt;
+
       // Capture email for abandoned cart tracking
       const response = await fetch('/api/cart/capture', {
         method: 'POST',
@@ -35,10 +44,10 @@ const CheckoutEmailCapture = ({
         },
         body: JSON.stringify({
           email,
-          cartItems,
-          dealId,
-          dealEndsAt,
-          cartTotal,
+          cartItems: resolvedCartItems,
+          dealId: resolvedDealId,
+          dealEndsAt: resolvedDealEndsAt,
+          cartTotal: resolvedCartTotal,
         }),
       });
 
@@ -49,13 +58,13 @@ const CheckoutEmailCapture = ({
           action: 'generate_lead',
           category: 'checkout',
           label: 'email_capture',
-          value: Number(((cartTotal || 0) / 100).toFixed(2)),
+          value: Number(((resolvedCartTotal || 0) / 100).toFixed(2)),
           method: 'email',
           currency: 'CAD',
         });
         
         // Immediately proceed to checkout with email and sessionToken
-        await onCheckout(email, data.sessionToken);
+        await onCheckout(email, data.sessionToken, snapshot);
       } else {
         toast.error(data.error || 'Something went wrong. Please try again.');
         setProcessing(false);

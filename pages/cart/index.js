@@ -38,8 +38,8 @@ const Cart = () => {
     .filter(item => item.pricePerSqFt)
     .reduce((sum, item) => sum + item.quantity, 0);
 
-  const cartItemsForTracking = useMemo(() => {
-    return Object.values(cartDetails || {}).map((item) => {
+  const buildCartItemsForTracking = (details) => {
+    return Object.values(details || {}).map((item) => {
       const itemPrice = item.pricePerSqFt ? item.pricePerSqFt : (item.price || 0) / 100;
       return {
         item_id: item.id,
@@ -51,6 +51,28 @@ const Cart = () => {
         quantity: item.quantity || 1,
       };
     });
+  };
+
+  const buildCartItemsForCapture = (details) => {
+    return Object.values(details || {}).map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
+      sqft: item.pricePerSqFt ? item.quantity : null,
+    }));
+  };
+
+  const calculateCartTotal = (details) => {
+    return Object.values(details || {}).reduce((sum, item) => {
+      if (item.pricePerSqFt) {
+        return sum + Math.round(item.pricePerSqFt * 100) * item.quantity;
+      }
+      return sum + (item.price || 0) * item.quantity;
+    }, 0);
+  };
+
+  const cartItemsForTracking = useMemo(() => {
+    return buildCartItemsForTracking(cartDetails || {});
   }, [cartDetails]);
 
   // Calculate actual item count (boxes for flooring, units for accessories)
@@ -81,21 +103,94 @@ const Cart = () => {
     }
   }, [cartCount, totalPrice, cartItemsForTracking]);
 
-  const handleCheckout = async (email, sessionToken) => {
+  const accessoriesCalculatorRef = useRef(null);
+
+  const mergeCartDetailsWithSelections = (details, selections) => {
+    if (!selections) return { ...details };
+
+    const merged = { ...details };
+    const applySelection = (product, desiredQty) => {
+      if (!product || desiredQty <= 0) return;
+      const existing = merged[product.id];
+      const existingQty = existing?.quantity || 0;
+      const nextQty = Math.max(existingQty, desiredQty);
+      if (nextQty !== existingQty) {
+        merged[product.id] = { ...(existing || product), quantity: nextQty };
+      }
+    };
+
+    if (selections.adhesive) {
+      applySelection(selections.adhesive.product, selections.adhesive.quantity);
+    }
+    if (selections.transitions) {
+      applySelection(selections.transitions.tMoulding?.product, selections.transitions.tMoulding?.quantity || 0);
+      applySelection(selections.transitions.reducer?.product, selections.transitions.reducer?.quantity || 0);
+      applySelection(selections.transitions.nosing?.product, selections.transitions.nosing?.quantity || 0);
+    }
+
+    return merged;
+  };
+
+  const addAccessoriesToCartFromSelections = (selections) => {
+    if (!selections) return;
+    const applySelection = (product, desiredQty) => {
+      if (!product || desiredQty <= 0) return;
+      const existingQty = cartDetails?.[product.id]?.quantity || 0;
+      if (desiredQty > existingQty) {
+        addItem(product, desiredQty - existingQty);
+      }
+    };
+
+    if (selections.adhesive) {
+      applySelection(selections.adhesive.product, selections.adhesive.quantity);
+    }
+    if (selections.transitions) {
+      applySelection(selections.transitions.tMoulding?.product, selections.transitions.tMoulding?.quantity || 0);
+      applySelection(selections.transitions.reducer?.product, selections.transitions.reducer?.quantity || 0);
+      applySelection(selections.transitions.nosing?.product, selections.transitions.nosing?.quantity || 0);
+    }
+  };
+
+  const getCheckoutSnapshot = () => {
+    const selections = accessoriesCalculatorRef.current?.getSelectedAccessories?.() || null;
+    const mergedCartDetails = mergeCartDetailsWithSelections(cartDetails || {}, selections);
+    const mergedTotalPrice = calculateCartTotal(mergedCartDetails);
+    const dealItem = Object.values(mergedCartDetails).find(item => item.id === 'deal-of-the-week');
+
+    return {
+      selections,
+      mergedCartDetails,
+      mergedTotalPrice,
+      cartItemsForTracking: buildCartItemsForTracking(mergedCartDetails),
+      cartItems: buildCartItemsForCapture(mergedCartDetails),
+      cartTotal: mergedTotalPrice,
+      dealId: dealItem?.id || null,
+      dealEndsAt: dealItem?.endsAt || null,
+    };
+  };
+
+  const handleCheckout = async (email, sessionToken, snapshot) => {
     setRedirecting(true);
     
     try {
+      const resolvedSnapshot = snapshot || getCheckoutSnapshot();
+      const mergedCartDetails = resolvedSnapshot.mergedCartDetails || cartDetails || {};
+      const mergedTotalPrice = resolvedSnapshot.mergedTotalPrice ?? calculateCartTotal(mergedCartDetails);
+      const mergedCartItemsForTracking = resolvedSnapshot.cartItemsForTracking || buildCartItemsForTracking(mergedCartDetails);
+
+      addAccessoriesToCartFromSelections(resolvedSnapshot.selections);
+
       trackEcommerce('begin_checkout', {
         currency: 'CAD',
-        value: Number((totalPrice / 100).toFixed(2)),
-        items: cartItemsForTracking,
+        value: Number((mergedTotalPrice / 100).toFixed(2)),
+        items: mergedCartItemsForTracking,
       });
 
       // Create Stripe checkout session
       const {
         data: { id },
       } = await axios.post('/api/checkout_sessions', {
-        items: Object.entries(cartDetails).map(([_, product]) => {
+        items: Object.entries(mergedCartDetails).map(([_, product]) => {
           if (product.pricePerSqFt) {
             return {
               price_data: {
@@ -307,7 +402,7 @@ const Cart = () => {
               {/* Project Accessories Calculator */}
               {shouldShowAccessoriesCalculator && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
-                  <ProjectAccessoriesCalculator sqFt={totalFlooringSqFt} />
+                  <ProjectAccessoriesCalculator ref={accessoriesCalculatorRef} sqFt={totalFlooringSqFt} />
                 </div>
               )}
             </div>
@@ -340,12 +435,8 @@ const Cart = () => {
                   {/* Email capture + checkout */}
                   <CheckoutEmailCapture
                     onCheckout={handleCheckout}
-                    cartItems={Object.values(cartDetails).map(item => ({
-                      name: item.name,
-                      quantity: item.quantity,
-                      price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
-                      sqft: item.pricePerSqFt ? item.quantity : null,
-                    }))}
+                    getCartSnapshot={getCheckoutSnapshot}
+                    cartItems={buildCartItemsForCapture(cartDetails)}
                     cartTotal={totalPrice}
                     dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
                     dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
