@@ -110,9 +110,10 @@ export default async function handler(req, res) {
         const serverPricePerSqFt = weeklyDeal.pricePerSqFt || weeklyDeal.price_per_sqft;
         const coveragePerBox = weeklyDeal.coverageSqFtPerBox || weeklyDeal.coverage_sqft_per_box || 48;
         
-        // Calculate boxes and price per box for clearer Stripe display
-        const sqftOrdered = clientQuantity; // clientQuantity is square footage
-        const boxesNeeded = Math.ceil(sqftOrdered / coveragePerBox);
+        // Calculate boxes and actual square footage customer will receive
+        const sqftRequested = clientQuantity; // clientQuantity is square footage requested
+        const boxesNeeded = Math.ceil(sqftRequested / coveragePerBox);
+        const actualSqFt = boxesNeeded * coveragePerBox; // Actual sq ft they're receiving
         const pricePerBoxCents = Math.round(serverPricePerSqFt * coveragePerBox * 100);
 
         const serverPriceCents = Math.round(serverPricePerSqFt * 100);
@@ -127,7 +128,7 @@ export default async function handler(req, res) {
             currency: 'cad',
             product_data: { 
               name: `${clientName} (${coveragePerBox} sq ft/box)`,
-              description: `${sqftOrdered} sq ft total`,
+              description: `${actualSqFt} sq ft total`,
             },
             unit_amount: pricePerBoxCents,
           },
