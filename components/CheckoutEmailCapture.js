@@ -68,37 +68,35 @@ const CheckoutEmailCapture = ({
   };
 
   return (
-    <div className="bg-vfo-sand border border-vfo-border rounded-sm p-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="checkout-email" className="block text-sm font-medium text-vfo-charcoal mb-2">
-            Email address
-          </label>
-          <input
-            id="checkout-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            required
-            disabled={processing}
-            className="w-full px-4 py-3 border border-vfo-border rounded-sm focus:ring-1 focus:ring-vfo-charcoal focus:border-vfo-charcoal text-base bg-white text-vfo-charcoal placeholder-vfo-lightgrey disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <p className="mt-1.5 text-xs text-vfo-grey">
-            For order updates and cart recovery if you need to come back later
-          </p>
-        </div>
-
-        <button
-          type="submit"
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="checkout-email" className="block text-sm font-medium text-vfo-charcoal mb-2">
+          Email address
+        </label>
+        <input
+          id="checkout-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          required
           disabled={processing}
-          className="w-full px-6 py-4 bg-vfo-charcoal hover:bg-vfo-slate text-white font-semibold rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {processing && <ArrowPathIcon className="w-5 h-5 animate-spin" />}
-          {processing ? 'Processing...' : 'Proceed to Secure Checkout'}
-        </button>
-      </form>
-    </div>
+          className="w-full px-4 py-3 border border-vfo-border rounded-sm focus:ring-1 focus:ring-vfo-charcoal focus:border-vfo-charcoal text-base bg-white text-vfo-charcoal placeholder-vfo-lightgrey disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <p className="mt-1.5 text-xs text-vfo-grey">
+          For order updates and cart recovery if you need to come back later
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={processing}
+        className="w-full px-6 py-4 bg-vfo-charcoal hover:bg-vfo-slate text-white font-semibold rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {processing && <ArrowPathIcon className="w-5 h-5 animate-spin" />}
+        {processing ? 'Processing...' : 'Proceed to Secure Checkout'}
+      </button>
+    </form>
   );
 };
 

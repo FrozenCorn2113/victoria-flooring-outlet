@@ -196,152 +196,162 @@ const Cart = () => {
         )}
 
         {cartCount > 0 ? (
-          <div className="mt-12">
-            {Object.entries(cartDetails).map(([key, product]) => (
-              <div
-                key={key}
-                className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:space-x-4 hover:shadow-lg hover:border-opacity-50 border border-opacity-0 rounded-md p-4"
-              >
-                {/* Image + Name */}
-                <Link
-                  href={`/products/${product.id}`}
-                  className="flex items-center gap-4 group min-w-0"
+          <div className="mt-12 grid lg:grid-cols-3 gap-8">
+            {/* Left Column: Cart Items + Accessories Calculator */}
+            <div className="lg:col-span-2 space-y-4">
+              {Object.entries(cartDetails).map(([key, product]) => (
+                <div
+                  key={key}
+                  className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:space-x-4 hover:shadow-lg hover:border-opacity-50 border border-opacity-0 rounded-md p-4"
                 >
-                  <div className="relative w-20 h-20 group-hover:scale-110 transition-transform">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <p className="font-heading text-base sm:text-xl group-hover:underline break-words">
-                    {product.name}
-                  </p>
-                </Link>
-
-                {/* Price + Actions */}
-                <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[8rem_1fr_auto] sm:items-center sm:gap-6 sm:w-[22rem] sm:justify-end">
-                  {/* Quantity */}
-                  <div className="grid grid-cols-[2.5rem_3rem_2.5rem] items-center text-center justify-self-start">
-                    {(() => {
-                      // For flooring products, calculate boxes
-                      const isFlooring = product.pricePerSqFt && product.coverageSqFtPerBox;
-                      const boxSize = product.coverageSqFtPerBox || 1;
-                      const boxes = isFlooring ? Math.ceil(product.quantity / boxSize) : product.quantity;
-                      const minBoxes = 1;
-
-                      return (
-                        <>
-                          <button
-                            onClick={() => {
-                              if (isFlooring) {
-                                // Remove one box worth of sq ft
-                                removeItem(product, boxSize);
-                              } else {
-                                removeItem(product, 1);
-                              }
-                            }}
-                            disabled={boxes <= minBoxes}
-                            className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1 mx-auto"
-                          >
-                            <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
-                          </button>
-                          <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
-                            {isFlooring ? boxes : product.quantity}
-                          </p>
-                          <button
-                            onClick={() => {
-                              if (isFlooring) {
-                                // Add one box worth of sq ft
-                                addItem(product, boxSize);
-                              } else {
-                                addItem(product, 1);
-                              }
-                            }}
-                            className="hover:bg-green-100 hover:text-green-500 rounded-md p-1 mx-auto"
-                          >
-                            <PlusSmIcon className="w-6 h-6 flex-shrink-0 " />
-                          </button>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Price */}
-                  <div className="sm:text-right">
-                  {product.priceOnRequest ? (
-                    <p className="font-medium text-xl text-vfo-charcoal">
-                      {product.priceNote || 'Call for price'}
-                    </p>
-                  ) : product.pricePerSqFt ? (
-                      <>
-                        <p className="font-light text-sm text-gray-600">
-                          {product.quantity} sq ft @ ${product.pricePerSqFt.toFixed(2)}/sq ft
-                        </p>
-                        <p className="font-medium text-xl">
-                          {formatCurrency(product.itemTotalPrice || (product.pricePerSqFt * product.quantity * 100))}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="font-medium text-xl">
-                        <XIcon className="w-4 h-4 text-gray-500 inline-block" />
-                        {formatCurrency(product.price)}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Remove item */}
-                  <button
-                    onClick={() => removeItem(product, product.quantity)}
-                    className="hover:text-rose-500 self-start sm:self-auto"
+                  {/* Image + Name */}
+                  <Link
+                    href={`/products/${product.id}`}
+                    className="flex items-center gap-4 group min-w-0"
                   >
-                    <XCircleIcon className="w-6 h-6 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
-                  </button>
+                    <div className="relative w-20 h-20 group-hover:scale-110 transition-transform">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <p className="font-heading text-base sm:text-xl group-hover:underline break-words">
+                      {product.name}
+                    </p>
+                  </Link>
+
+                  {/* Price + Actions */}
+                  <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[8rem_1fr_auto] sm:items-center sm:gap-6 sm:w-[22rem] sm:justify-end">
+                    {/* Quantity */}
+                    <div className="grid grid-cols-[2.5rem_3rem_2.5rem] items-center text-center justify-self-start">
+                      {(() => {
+                        // For flooring products, calculate boxes
+                        const isFlooring = product.pricePerSqFt && product.coverageSqFtPerBox;
+                        const boxSize = product.coverageSqFtPerBox || 1;
+                        const boxes = isFlooring ? Math.ceil(product.quantity / boxSize) : product.quantity;
+                        const minBoxes = 1;
+
+                        return (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (isFlooring) {
+                                  // Remove one box worth of sq ft
+                                  removeItem(product, boxSize);
+                                } else {
+                                  removeItem(product, 1);
+                                }
+                              }}
+                              disabled={boxes <= minBoxes}
+                              className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-current hover:bg-rose-100 hover:text-rose-500 rounded-md p-1 mx-auto"
+                            >
+                              <MinusSmIcon className="w-6 h-6 flex-shrink-0" />
+                            </button>
+                            <p className="font-medium text-lg sm:text-xl whitespace-nowrap">
+                              {isFlooring ? boxes : product.quantity}
+                            </p>
+                            <button
+                              onClick={() => {
+                                if (isFlooring) {
+                                  // Add one box worth of sq ft
+                                  addItem(product, boxSize);
+                                } else {
+                                  addItem(product, 1);
+                                }
+                              }}
+                              className="hover:bg-green-100 hover:text-green-500 rounded-md p-1 mx-auto"
+                            >
+                              <PlusSmIcon className="w-6 h-6 flex-shrink-0 " />
+                            </button>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Price */}
+                    <div className="sm:text-right">
+                    {product.priceOnRequest ? (
+                      <p className="font-medium text-xl text-vfo-charcoal">
+                        {product.priceNote || 'Call for price'}
+                      </p>
+                    ) : product.pricePerSqFt ? (
+                        <>
+                          <p className="font-light text-sm text-gray-600">
+                            {product.quantity} sq ft @ ${product.pricePerSqFt.toFixed(2)}/sq ft
+                          </p>
+                          <p className="font-medium text-xl">
+                            {formatCurrency(product.itemTotalPrice || (product.pricePerSqFt * product.quantity * 100))}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-medium text-xl">
+                          <XIcon className="w-4 h-4 text-gray-500 inline-block" />
+                          {formatCurrency(product.price)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Remove item */}
+                    <button
+                      onClick={() => removeItem(product, product.quantity)}
+                      className="hover:text-rose-500 self-start sm:self-auto"
+                    >
+                      <XCircleIcon className="w-6 h-6 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Project Accessories Calculator */}
+              {shouldShowAccessoriesCalculator && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <ProjectAccessoriesCalculator sqFt={totalFlooringSqFt} />
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Order Summary (Sticky) */}
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-6">
+                <div className="bg-vfo-sand border border-vfo-border rounded-sm p-6">
+                  <h3 className="text-xl font-heading text-vfo-charcoal mb-6">Order Summary</h3>
+                  
+                  <div className="space-y-3 mb-6 pb-6 border-b border-vfo-border">
+                    <div className="flex justify-between text-base">
+                      <span className="text-vfo-grey">Subtotal:</span>
+                      <span className="font-medium text-vfo-charcoal">
+                        {formatCurrency(totalPrice)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-vfo-grey">
+                      <span>Shipping:</span>
+                      <span>Calculated at checkout</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <p className="text-xs text-vfo-grey">
+                      💰 Free shipping on orders over 500 sq ft • Zone-based rates for all Vancouver Island
+                    </p>
+                  </div>
+
+                  {/* Email capture + checkout */}
+                  <CheckoutEmailCapture
+                    onCheckout={handleCheckout}
+                    cartItems={Object.values(cartDetails).map(item => ({
+                      name: item.name,
+                      quantity: item.quantity,
+                      price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
+                      sqft: item.pricePerSqFt ? item.quantity : null,
+                    }))}
+                    cartTotal={totalPrice}
+                    dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
+                    dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
+                  />
                 </div>
               </div>
-            ))}
-
-            {/* Project Accessories Calculator */}
-            {shouldShowAccessoriesCalculator && (
-              <div className="mt-12 mb-8 pb-8 border-b border-gray-200">
-                <ProjectAccessoriesCalculator sqFt={totalFlooringSqFt} />
-              </div>
-            )}
-
-            {/* Cart Summary */}
-            <div className="border-t py-8 mt-8">
-              <div className="space-y-3 mb-8">
-                <div className="flex justify-between text-lg">
-                  <span className="text-vfo-grey">Subtotal:</span>
-                  <span className="font-medium text-vfo-charcoal">
-                    {formatCurrency(totalPrice)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm text-vfo-grey">
-                  <span>Shipping:</span>
-                  <span>Calculated at checkout</span>
-                </div>
-                <div className="pt-3 border-t">
-                  <p className="text-xs text-vfo-grey mb-4">
-                    💰 Free shipping on orders over 500 sq ft • Zone-based rates for all Vancouver Island
-                  </p>
-                </div>
-              </div>
-
-              {/* Email capture + checkout */}
-              <CheckoutEmailCapture
-                onCheckout={handleCheckout}
-                cartItems={Object.values(cartDetails).map(item => ({
-                  name: item.name,
-                  quantity: item.quantity,
-                  price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
-                  sqft: item.pricePerSqFt ? item.quantity : null,
-                }))}
-                cartTotal={totalPrice}
-                dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
-                dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
-              />
             </div>
           </div>
         ) : null}
