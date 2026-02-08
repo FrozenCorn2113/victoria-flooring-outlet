@@ -1,6 +1,5 @@
 import Stripe from 'stripe';
 import { getWeeklyDealFromDb } from '../../../lib/harbinger/sync';
-import { calculateShipping, validateCanadianPostalCode } from '../../../lib/shipping';
 import products from '../../../products';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -49,7 +48,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const { items, postalCode, shippingZone } = req.body || {};
+    const { items, email, sessionToken } = req.body || {};
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'No items provided' });
@@ -141,64 +140,34 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------
-    // SERVER-SIDE SHIPPING CALCULATION
-    // Never trust client-provided shipping amount
+    // CALCULATE TOTAL SQUARE FOOTAGE FOR FREE SHIPPING CHECK
+    // Free shipping on orders over 500 sq ft
     // -------------------------------------------------------
 
-    let shippingCost = 0;
-    let validatedZone = shippingZone || '';
-    let formattedPostalCode = postalCode || '';
-
-    if (postalCode && validateCanadianPostalCode(postalCode)) {
-      // Count total boxes for shipping calculation
-      let totalBoxes = 0;
-      for (const item of validatedLineItems) {
-        const isAccessory = accessoryPriceMap.has(item.price_data?.product_data?.name);
-        if (!isAccessory && weeklyDeal) {
-          const coveragePerBox = weeklyDeal.coverageSqFtPerBox
-            || weeklyDeal.coverage_sqft_per_box
-            || 48;
-          totalBoxes += Math.ceil(item.quantity / coveragePerBox);
-        }
-      }
-
-      if (totalBoxes > 0) {
-        const shippingResult = calculateShipping({ postalCode, totalBoxes });
-        if (shippingResult.valid) {
-          shippingCost = shippingResult.shipping;
-          validatedZone = shippingResult.zone;
-          formattedPostalCode = shippingResult.formattedPostalCode;
-        }
+    let totalSqFt = 0;
+    for (const item of validatedLineItems) {
+      const isAccessory = accessoryPriceMap.has(item.price_data?.product_data?.name);
+      if (!isAccessory) {
+        totalSqFt += item.quantity; // quantity is square footage for flooring
       }
     }
 
-    // Add shipping as a line item
-    if (shippingCost > 0) {
-      validatedLineItems.push({
-        price_data: {
-          currency: 'cad',
-          product_data: { name: 'Shipping' },
-          unit_amount: shippingCost,
-        },
-        quantity: 1,
-      });
-    }
+    const qualifiesForFreeShipping = totalSqFt >= 500;
 
     // Build items summary for metadata (Stripe limits metadata to 500 chars per value)
     const itemsSummary = validatedLineItems
-      .filter(item => item.price_data?.product_data?.name !== 'Shipping')
       .map(item => `${item.price_data?.product_data?.name || 'Item'} x${item.quantity}`)
       .join(', ')
       .slice(0, 490);
 
     const subtotal = validatedLineItems
-      .filter(item => item.price_data?.product_data?.name !== 'Shipping')
       .reduce((sum, item) => sum + (item.price_data.unit_amount * (item.quantity || 1)), 0);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: validatedLineItems,
+      customer_email: email || undefined, // Pre-fill email from cart capture
       billing_address_collection: 'required',
       phone_number_collection: { enabled: true },
       shipping_address_collection: {
@@ -206,10 +175,10 @@ export default async function handler(req, res) {
       },
       metadata: {
         items_summary: itemsSummary,
-        postal_code: formattedPostalCode,
-        shipping_zone: validatedZone,
         subtotal: String(subtotal),
-        shipping_cost: String(shippingCost),
+        total_sqft: String(totalSqFt),
+        free_shipping: String(qualifiesForFreeShipping),
+        session_token: sessionToken || '', // For abandoned cart tracking
       },
       success_url: `${getValidOrigin(req.headers.origin)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getValidOrigin(req.headers.origin)}/cart`,

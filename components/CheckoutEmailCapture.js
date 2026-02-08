@@ -1,5 +1,5 @@
 // components/CheckoutEmailCapture.js
-// Email capture component for cart page (abandoned cart tracking)
+// Inline email capture + checkout button (abandoned cart tracking)
 
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -7,18 +7,14 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { event } from '@/lib/analytics';
 
 const CheckoutEmailCapture = ({ 
-  onEmailCaptured,
-  onProceedToCheckout, // New prop to auto-proceed after capture
+  onCheckout, // Function to call after email is captured
   cartItems, 
   cartTotal, 
   dealId, 
-  dealEndsAt,
-  postalCode,
-  shippingZone 
+  dealEndsAt 
 }) => {
   const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [captured, setCaptured] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,9 +24,10 @@ const CheckoutEmailCapture = ({
       return;
     }
 
-    setSubmitting(true);
+    setProcessing(true);
 
     try {
+      // Capture email for abandoned cart tracking
       const response = await fetch('/api/cart/capture', {
         method: 'POST',
         headers: {
@@ -41,8 +38,6 @@ const CheckoutEmailCapture = ({
           cartItems,
           dealId,
           dealEndsAt,
-          postalCode,
-          shippingZone,
           cartTotal,
         }),
       });
@@ -50,9 +45,6 @@ const CheckoutEmailCapture = ({
       const data = await response.json();
 
       if (response.ok) {
-        setCaptured(true);
-        onEmailCaptured(email, data.sessionToken);
-        toast.success('Email saved! Redirecting to checkout...');
         event({
           action: 'generate_lead',
           category: 'checkout',
@@ -62,69 +54,49 @@ const CheckoutEmailCapture = ({
           currency: 'CAD',
         });
         
-        // Auto-proceed to checkout after capture
-        if (onProceedToCheckout) {
-          setTimeout(() => {
-            onProceedToCheckout();
-          }, 500); // Small delay so user sees the success message
-        }
+        // Immediately proceed to checkout with email and sessionToken
+        await onCheckout(email, data.sessionToken);
       } else {
         toast.error(data.error || 'Something went wrong. Please try again.');
+        setProcessing(false);
       }
     } catch (error) {
-      console.error('Email capture error:', error);
+      console.error('Checkout error:', error);
       toast.error('Network error. Please check your connection.');
-    } finally {
-      setSubmitting(false);
+      setProcessing(false);
     }
   };
 
-  if (captured) {
-    return (
-      <div className="bg-green-50 border border-green-200 rounded-sm p-4 mb-4" role="status">
-        <div className="flex items-center gap-2">
-          <ArrowPathIcon className="w-4 h-4 animate-spin text-green-600" />
-          <p className="text-green-800 text-sm">
-            Email saved! Redirecting to secure checkout...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-vfo-sand border border-vfo-border rounded-sm p-6 mb-6">
-      <h3 className="text-vfo-charcoal font-heading text-lg mb-2">
-        Complete your order
-      </h3>
-      <p className="text-vfo-grey text-sm mb-4">
-        Enter your email to proceed to secure checkout
-      </p>
-
+    <div className="bg-vfo-sand border border-vfo-border rounded-sm p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
+          <label htmlFor="checkout-email" className="block text-sm font-medium text-vfo-charcoal mb-2">
+            Email address
+          </label>
           <input
+            id="checkout-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
             required
-            className="w-full px-4 py-3 border border-vfo-border rounded-sm focus:ring-1 focus:ring-vfo-charcoal focus:border-vfo-charcoal text-base bg-white text-vfo-charcoal placeholder-vfo-lightgrey"
+            disabled={processing}
+            className="w-full px-4 py-3 border border-vfo-border rounded-sm focus:ring-1 focus:ring-vfo-charcoal focus:border-vfo-charcoal text-base bg-white text-vfo-charcoal placeholder-vfo-lightgrey disabled:opacity-50 disabled:cursor-not-allowed"
           />
+          <p className="mt-1.5 text-xs text-vfo-grey">
+            For order updates and cart recovery if you need to come back later
+          </p>
         </div>
 
         <button
           type="submit"
-          disabled={submitting}
-          className="w-full px-6 py-3 bg-vfo-charcoal hover:bg-vfo-slate text-white font-medium rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          disabled={processing}
+          className="w-full px-6 py-4 bg-vfo-charcoal hover:bg-vfo-slate text-white font-semibold rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {submitting && <ArrowPathIcon className="w-4 h-4 animate-spin" />}
-          {submitting ? 'Saving...' : 'Proceed to Checkout'}
+          {processing && <ArrowPathIcon className="w-5 h-5 animate-spin" />}
+          {processing ? 'Processing...' : 'Proceed to Secure Checkout'}
         </button>
-
-        <p className="text-xs text-vfo-grey">
-          We'll use this to send order updates and save your cart if you need to come back later.
-        </p>
       </form>
     </div>
   );

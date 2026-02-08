@@ -6,7 +6,6 @@ import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import getStripe from '@/lib/get-stripe';
-import { calculateShipping } from '@/lib/shipping';
 import { trackEcommerce } from '@/lib/analytics';
 import ProjectAccessoriesCalculator from '@/components/ProjectAccessoriesCalculator';
 import CheckoutEmailCapture from '@/components/CheckoutEmailCapture';
@@ -21,14 +20,7 @@ const Cart = () => {
   const { cartDetails, totalPrice, cartCount, addItem, removeItem, clearCart, expiredItems, clearExpiredNotification } =
     useShoppingCart();
   const [redirecting, setRedirecting] = useState(false);
-  const [postalCode, setPostalCode] = useState('');
-  const [shippingResult, setShippingResult] = useState(null);
-  const [shippingNotice, setShippingNotice] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailCaptured, setEmailCaptured] = useState(false);
-  const [sessionToken, setSessionToken] = useState(null);
   const viewCartTrackedRef = useRef(false);
-  const shippingInfoTrackedRef = useRef('');
 
   const adhesiveIds = [
     'uzin_ke_2000_s',
@@ -78,16 +70,6 @@ const Cart = () => {
 
   const shouldShowAccessoriesCalculator = totalFlooringSqFt > 0;
 
-  // Calculate shipping when postal code or cart changes
-  useEffect(() => {
-    if (postalCode && cartCount > 0) {
-      const result = calculateShipping({ postalCode, cartDetails });
-      setShippingResult(result);
-    } else {
-      setShippingResult(null);
-    }
-  }, [postalCode, cartDetails, cartCount]);
-
   useEffect(() => {
     if (cartCount > 0 && !viewCartTrackedRef.current) {
       trackEcommerce('view_cart', {
@@ -99,62 +81,21 @@ const Cart = () => {
     }
   }, [cartCount, totalPrice, cartItemsForTracking]);
 
-  useEffect(() => {
-    if (!shippingResult?.valid || cartCount === 0) return;
-    const shippingKey = `${postalCode}-${shippingResult.shipping}-${cartCount}`;
-    if (shippingInfoTrackedRef.current === shippingKey) return;
-
-    trackEcommerce('add_shipping_info', {
-      currency: 'CAD',
-      value: Number(((totalPrice + shippingResult.shipping) / 100).toFixed(2)),
-      shipping: Number((shippingResult.shipping / 100).toFixed(2)),
-      shipping_tier: shippingResult.zone || undefined,
-      items: cartItemsForTracking,
-    });
-    shippingInfoTrackedRef.current = shippingKey;
-  }, [shippingResult, postalCode, cartCount, totalPrice, cartItemsForTracking]);
-
-  const handlePostalCodeChange = (e) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    // Auto-format as user types (A1A1A1 -> A1A 1A1)
-    if (value.length <= 6) {
-      let formatted = value;
-      if (value.length > 3) {
-        formatted = `${value.slice(0, 3)} ${value.slice(3)}`;
-      }
-      setPostalCode(formatted.trim());
-      setShippingNotice(false);
-    }
-  };
-
-  const handleEmailCaptured = (capturedEmail, token) => {
-    setEmail(capturedEmail);
-    setSessionToken(token);
-    setEmailCaptured(true);
-  };
-
-  const redirectToCheckout = async () => {
-    if (!shippingResult?.valid) {
-      setShippingNotice(true);
-      return;
-    }
-    if (!emailCaptured) {
-      setShippingNotice(true);
-      return;
-    }
+  const handleCheckout = async (email, sessionToken) => {
     setRedirecting(true);
+    
     try {
       trackEcommerce('begin_checkout', {
         currency: 'CAD',
-        value: Number((grandTotal / 100).toFixed(2)),
+        value: Number((totalPrice / 100).toFixed(2)),
         items: cartItemsForTracking,
       });
-      // Create Stripe checkout
+
+      // Create Stripe checkout session
       const {
         data: { id },
       } = await axios.post('/api/checkout_sessions', {
         items: Object.entries(cartDetails).map(([_, product]) => {
-          // If product has pricePerSqFt, use price_data instead of price ID
           if (product.pricePerSqFt) {
             return {
               price_data: {
@@ -162,39 +103,35 @@ const Cart = () => {
                 product_data: {
                   name: product.name,
                 },
-                unit_amount: Math.round(product.pricePerSqFt * 100), // Convert to cents per sq ft
+                unit_amount: Math.round(product.pricePerSqFt * 100),
               },
-              quantity: product.quantity, // quantity is square footage
+              quantity: product.quantity,
             };
           }
-          // For accessories and other products without pricePerSqFt, use price_data
           return {
             price_data: {
               currency: 'cad',
               product_data: {
                 name: product.name,
               },
-              unit_amount: product.price, // price is already in cents
+              unit_amount: product.price,
             },
             quantity: product.quantity,
           };
         }),
-        shipping: shippingResult?.shipping || 0,
-        postalCode: postalCode || '',
-        shippingZone: shippingResult?.zone || '',
-        sessionToken: sessionToken, // Include session token for abandoned cart tracking
+        email,
+        sessionToken,
       });
 
-      // Redirect to checkout
+      // Redirect to Stripe Checkout
       const stripe = await getStripe();
       await stripe.redirectToCheckout({ sessionId: id });
     } catch (error) {
       console.error('Checkout error:', error);
       setRedirecting(false);
+      throw error; // Re-throw so CheckoutEmailCapture can handle it
     }
   };
-
-  const grandTotal = totalPrice + (shippingResult?.shipping || 0);
 
   return (
     <>
@@ -372,109 +309,39 @@ const Cart = () => {
               </div>
             )}
 
-            {/* Shipping Calculator */}
-            <div className="mt-8 border-t pt-6">
-              <h3 className="text-xl font-heading tracking-wide mb-4">Calculate Shipping</h3>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                <div className="flex-1">
-                  <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    id="postalCode"
-                    value={postalCode}
-                    onChange={handlePostalCodeChange}
-                    placeholder="V8V 1N1"
-                    maxLength={7}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                  {shippingResult && !shippingResult.valid && (
-                    <p className="mt-1 text-sm text-red-600">{shippingResult.error}</p>
-                  )}
-                </div>
-              </div>
-
-              {shippingResult && shippingResult.valid && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Zone:</span>
-                      <span className="font-medium">{shippingResult.zone}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Boxes:</span>
-                      <span>{shippingResult.boxes} {shippingResult.boxes === 1 ? 'box' : 'boxes'}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Rate:</span>
-                      <span>{formatCurrency(shippingResult.ratePerBox)} per box</span>
-                    </div>
-                    <div className="flex justify-between font-medium pt-2 border-t">
-                      <span>Shipping Total:</span>
-                      <span className="text-emerald-600">{formatCurrency(shippingResult.shipping)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t py-4 mt-8">
-              <div className="space-y-2 text-right mb-6">
-                <p className="text-lg">
-                  Subtotal:{' '}
-                  <span className="font-medium">
+            {/* Cart Summary */}
+            <div className="border-t py-8 mt-8">
+              <div className="space-y-3 mb-8">
+                <div className="flex justify-between text-lg">
+                  <span className="text-vfo-grey">Subtotal:</span>
+                  <span className="font-medium text-vfo-charcoal">
                     {formatCurrency(totalPrice)}
                   </span>
-                </p>
-                {shippingResult && shippingResult.valid && (
-                  <p className="text-lg">
-                    Shipping:{' '}
-                    <span className="font-medium text-emerald-600">
-                      {formatCurrency(shippingResult.shipping)}
-                    </span>
+                </div>
+                <div className="flex justify-between text-sm text-vfo-grey">
+                  <span>Shipping:</span>
+                  <span>Calculated at checkout</span>
+                </div>
+                <div className="pt-3 border-t">
+                  <p className="text-xs text-vfo-grey mb-4">
+                    💰 Free shipping on orders over 500 sq ft • Zone-based rates for all Vancouver Island
                   </p>
-                )}
-                <p className="text-2xl font-medium pt-2 border-t">
-                  Total:{' '}
-                  <span className="text-emerald-600">
-                    {formatCurrency(grandTotal)}
-                  </span>
-                </p>
+                </div>
               </div>
 
-              {/* Email capture for abandoned cart tracking */}
-              {shippingResult?.valid && (
-                <CheckoutEmailCapture
-                  onEmailCaptured={handleEmailCaptured}
-                  onProceedToCheckout={redirectToCheckout}
-                  cartItems={Object.values(cartDetails).map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
-                    sqft: item.pricePerSqFt ? item.quantity : null,
-                  }))}
-                  cartTotal={Math.round(grandTotal * 100)}
-                  dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
-                  dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
-                  postalCode={postalCode}
-                  shippingZone={shippingResult?.zone}
-                />
-              )}
-
-              {/* Validation messages */}
-              {!shippingResult?.valid && (postalCode || shippingNotice) && (
-                <p className="mt-2 text-sm text-red-600 text-right">
-                  {postalCode
-                    ? 'Please enter a valid Canadian postal code'
-                    : 'Please calculate shipping before proceeding to checkout'}
-                </p>
-              )}
-              {!shippingResult?.valid && !postalCode && !shippingNotice && (
-                <p className="mt-2 text-sm text-gray-600 text-right">
-                  Please calculate shipping to enable checkout.
-                </p>
-              )}
+              {/* Email capture + checkout */}
+              <CheckoutEmailCapture
+                onCheckout={handleCheckout}
+                cartItems={Object.values(cartDetails).map(item => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  price: item.pricePerSqFt ? Math.round(item.pricePerSqFt * 100) : item.price,
+                  sqft: item.pricePerSqFt ? item.quantity : null,
+                }))}
+                cartTotal={totalPrice}
+                dealId={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.id || null}
+                dealEndsAt={Object.values(cartDetails).find(item => item.id === 'deal-of-the-week')?.endsAt || null}
+              />
             </div>
           </div>
         ) : null}
