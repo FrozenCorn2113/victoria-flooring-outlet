@@ -14,6 +14,7 @@ import {
 import { getWeeklyDealFromDb, getNextWeeklyDealFromDb } from '@/lib/harbinger/sync';
 import { createAndSendCampaign, getGroupIds, isMailerLiteConfigured } from '@/lib/mailerlite';
 import { generateWeeklyDealDropEmail, generateWeeklyDealDropEmailText } from '@/lib/email-templates/weekly-deal-drop';
+import { generateNextWeekDealSubscriberEmail, generateNextWeekDealSubscriberEmailText } from '@/lib/email-templates/next-week-deal-subscriber';
 import { generatePostPurchaseEmail, generatePostPurchaseEmailText } from '@/lib/email-templates/post-purchase';
 import { Resend } from 'resend';
 
@@ -157,6 +158,7 @@ export default async function handler(req, res) {
 
   const results = {
     weeklyEmail: null,
+    nextWeekDealSubscriber: { sent: 0, failed: 0 },
     abandonedCartReminder1: { sent: 0, failed: 0 },
     abandonedCartReminder2: { sent: 0, failed: 0 },
     postPurchaseEmails: { sent: 0, failed: 0 },
@@ -178,7 +180,61 @@ export default async function handler(req, res) {
       results.weeklyEmail = { skipped: true, reason: 'Not Sunday evening PT' };
     }
 
-    // 2. Send abandoned cart reminder 1 (12 hours)
+    // 2. Send "next week's deal" follow-up to new subscribers (1+ day after signup)
+    console.log('[email-jobs] Checking for next-week-deal subscriber emails...');
+    const subscribersDueForNextWeekDeal = await query(
+      `SELECT id, email, first_name
+       FROM newsletter_subscribers
+       WHERE status = 'subscribed'
+         AND next_week_deal_email_sent_at IS NULL
+         AND subscribed_at <= CURRENT_TIMESTAMP - INTERVAL '1 day'
+       ORDER BY subscribed_at ASC
+       LIMIT 50`
+    );
+    const nextDealRaw = await getNextWeeklyDealFromDb();
+    const transformDealForSubscriber = (deal) => deal ? {
+      id: deal.id,
+      name: deal.name || `${deal.brand} ${deal.collection}`,
+      vendor: deal.brand,
+      series: deal.collection,
+      description: deal.description || deal.seriesDescription || '',
+      pricePerSqFt: deal.pricePerSqFt,
+      currency: deal.currency || 'CAD',
+      image: deal.image,
+    } : null;
+    const nextDealForEmail = transformDealForSubscriber(nextDealRaw);
+
+    for (const sub of subscribersDueForNextWeekDeal.rows) {
+      try {
+        const html = generateNextWeekDealSubscriberEmail({
+          email: sub.email,
+          firstName: sub.first_name || null,
+          nextDeal: nextDealForEmail,
+        });
+        const text = generateNextWeekDealSubscriberEmailText({
+          firstName: sub.first_name || null,
+          nextDeal: nextDealForEmail,
+        });
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || 'Victoria Flooring Outlet <hello@victoriaflooringoutlet.ca>',
+          to: sub.email,
+          subject: nextDealForEmail ? `Sneak peek: Next week's deal – ${nextDealForEmail.name}` : "Your first Deal of the Week is coming Sunday",
+          html,
+          text,
+        });
+        await query(
+          `UPDATE newsletter_subscribers SET next_week_deal_email_sent_at = CURRENT_TIMESTAMP WHERE id = $1`,
+          [sub.id]
+        );
+        results.nextWeekDealSubscriber.sent++;
+        console.log(`[email-jobs] Sent next-week-deal email to ${sub.email}`);
+      } catch (error) {
+        console.error(`[email-jobs] Failed to send next-week-deal email to ${sub.email}:`, error);
+        results.nextWeekDealSubscriber.failed++;
+      }
+    }
+
+    // 3. Send abandoned cart reminder 1 (12 hours)
     console.log('[email-jobs] Checking for abandoned cart reminder 1...');
     const cartsDueForReminder1 = await getCartsDueForReminder1();
     console.log(`[email-jobs] Found ${cartsDueForReminder1.length} carts due for reminder 1`);
@@ -193,7 +249,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Send abandoned cart reminder 2 (24 hours)
+    // 4. Send abandoned cart reminder 2 (24 hours)
     console.log('[email-jobs] Checking for abandoned cart reminder 2...');
     const cartsDueForReminder2 = await getCartsDueForReminder2();
     console.log(`[email-jobs] Found ${cartsDueForReminder2.length} carts due for reminder 2`);
@@ -208,7 +264,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. Send post-purchase emails
+    // 5. Send post-purchase emails
     console.log('[email-jobs] Checking for post-purchase emails...');
     const ordersDueForPostPurchase = await query(
       `SELECT o.*, s.first_name 
@@ -277,7 +333,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 5. Cleanup expired carts
+    // 6. Cleanup expired carts
     console.log('[email-jobs] Cleaning up expired carts...');
     const expiredCount = await cleanupExpiredCarts();
     results.cleanup.expired = expiredCount;
