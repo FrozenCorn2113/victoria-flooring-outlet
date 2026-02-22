@@ -17,12 +17,19 @@ export default function SquareFootageCalculator({
     ? Math.ceil(sqFt / coverageSqFtPerBox) 
     : 0;
   const totalCoverage = boxesNeeded * (coverageSqFtPerBox || 0);
-  const totalPrice = pricePerSqFt * sqFt;
   const pricePerBox = pricePerSqFt * (coverageSqFtPerBox || 0);
+  const totalPrice = boxesNeeded > 0 ? boxesNeeded * pricePerBox : 0;
+  const formatSqFt = (value, decimals = 2) => {
+    if (value === null || value === undefined || Number.isNaN(value)) return '0';
+    if (decimals === 0) return String(Math.round(value));
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  };
 
   // Calculate savings if compare price exists
   const hasSavings = compareAtPricePerSqFt && compareAtPricePerSqFt > pricePerSqFt;
-  const savings = hasSavings ? (compareAtPricePerSqFt - pricePerSqFt) * sqFt : 0;
+  const savings = hasSavings ? (compareAtPricePerSqFt - pricePerSqFt) * totalCoverage : 0;
+  const overageSqFt = totalCoverage - sqFt;
 
   return (
     <div className="bg-white border border-vfo-border rounded-lg p-6 space-y-4">
@@ -51,7 +58,7 @@ export default function SquareFootageCalculator({
         <div className="flex justify-between items-center text-sm">
           <span className="font-medium text-vfo-grey">Box Coverage</span>
           <span className="font-light text-vfo-charcoal">
-            {hasCoverage ? `${coverageSqFtPerBox} sq. ft. / box` : '—'}
+            {hasCoverage ? `${formatSqFt(coverageSqFtPerBox)} sq. ft. / box` : '—'}
           </span>
         </div>
 
@@ -60,13 +67,13 @@ export default function SquareFootageCalculator({
             <span className="text-sm font-medium text-vfo-grey">Total Required</span>
             <span className="text-base font-medium text-vfo-charcoal">
               {hasSqFt && hasCoverage
-                ? `${boxesNeeded} ${boxesNeeded === 1 ? 'box' : 'boxes'} covers ${totalCoverage} sq. ft.`
+                ? `${boxesNeeded} ${boxesNeeded === 1 ? 'box' : 'boxes'} covers ${formatSqFt(totalCoverage, 0)} sq. ft.`
                 : 'Enter square footage to see totals'}
             </span>
           </div>
           {hasSqFt && hasCoverage && totalCoverage > sqFt && (
             <p className="text-xs font-light text-vfo-grey mt-1 text-right">
-              (includes {totalCoverage - sqFt} sq. ft. overage)
+              (includes {formatSqFt(overageSqFt, 0)} sq. ft. overage)
             </p>
           )}
         </div>
